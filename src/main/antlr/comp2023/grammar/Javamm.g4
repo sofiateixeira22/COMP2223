@@ -28,8 +28,8 @@ varDeclaration
 
 
 methodDeclaration
-    : 'public' type ID '(' (type ID ( ',' type ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}'
-    | 'public' 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' (varDeclaration)* (statement)* '}'
+    : 'public'? type ID '(' (type ID ( ',' type ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}'
+    | 'public'? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' (varDeclaration)* (statement)* '}'
     ;
 
 type
@@ -52,7 +52,7 @@ expression
     : expression ('++' | '--') #UnaryOp
     | expression op=('*' | '/') expression #BinaryOp
     | expression op=('+' | '-') expression #BinaryOp
-    | expression op=('<' | '>' | '<=' | '>=') #BinaryOp
+    | expression op=('<' | '>' | '<=' | '>=') expression #BinaryOp
     | expression op=('==' | '!=') #BinaryOp
     | expression '&' expression #BinaryOp
     | expression '|' expression #BinaryOp
@@ -63,7 +63,7 @@ expression
 //    Não tenho a certeza se as duas linhas de baixo são #TernaryOp e #UnaryOp ou outra coisa
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
     | 'new' 'int' '[' expression ']' #UnaryOp
-    | 'new' 'ID' '('')' #Identifier
+    | 'new' ID '('')' #Identifier
     | '!' expression #UnaryOp
     | '(' expression ')' #UnaryOp
     | value=INTEGER #Integer
