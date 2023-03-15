@@ -7,6 +7,7 @@ import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +37,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         infoMap.put("localVariables", localVariables);
 
         AstVisitor visitor = new AstVisitor();
-
-        visitor.visit(jmmParserResult.getRootNode(), infoMap);
+        visitor.visit(jmmParserResult.getRootNode(), "");
 
 
     }
