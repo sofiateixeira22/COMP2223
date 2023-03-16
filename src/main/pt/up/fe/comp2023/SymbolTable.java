@@ -20,7 +20,9 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     String superString;
     List<Symbol> fields;
     List<String> methods;
-    Type returnType;
+    Map<String, Type> methodTypes;
+
+    Map<String, List<Symbol>> methodParameters;
     List<Symbol> parameters;
     List<Symbol> localVariables;
 
@@ -34,8 +36,8 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         this.superString = visitor.getSuperString();
         this.fields = visitor.getFields();
         this.methods = visitor.getMethods();
-        this.returnType = visitor.getReturnType();
-        this.parameters = visitor.getParameters();
+        this.methodTypes = visitor.getMethodTypes();
+        this.methodParameters = visitor.getMethodParameters();
         this.localVariables = visitor.getLocalVariables();
 
 
@@ -68,12 +70,12 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public Type getReturnType(String s) {
-        return this.returnType;
+        return methodTypes.get(s);
     }
 
     @Override
     public List<Symbol> getParameters(String s) {
-        return this.parameters;
+        return this.methodParameters.get(s);
     }
 
     @Override

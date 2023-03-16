@@ -28,8 +28,8 @@ varDeclaration
 
 
 methodDeclaration
-    : 'public'? type ID '(' (type ID ( ',' type ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}'
-    | 'public'? 'static' 'void' 'main' '(' type '[' ']' ID ')' '{' (varDeclaration)* (statement)* '}'
+    : 'public'? type identifier '(' (type identifier ( ',' type identifier)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}'
+    | 'public'? 'static' type identifier '(' type '[' ']' identifier ')' '{' (varDeclaration)* (statement)* '}'
     ;
 
 type

@@ -5,8 +5,7 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiFunction;
 
 public class AstVisitor extends AJmmVisitor {
@@ -14,10 +13,12 @@ public class AstVisitor extends AJmmVisitor {
     List<String> imports = new ArrayList<>();
     String className;
     String superString;
-    List<Symbol> fields;
+    List<Symbol> fields = new ArrayList<>();
     List<String> methods = new ArrayList<>();
     Type returnType;
-    List<Symbol> parameters;
+    Map<String, Type> methodTypes = new HashMap<>();
+    List<Symbol> parameters = new ArrayList<>();
+    Map<String, List<Symbol>> methodParameters = new HashMap<>();
     List<Symbol> localVariables;
 
 
@@ -34,12 +35,6 @@ public class AstVisitor extends AJmmVisitor {
         BiFunction<JmmNode, String, String> assignmentVisit = this::assignmentVisit;
         addVisit ("Assignment", assignmentVisit );
 
-        BiFunction<JmmNode, String, String> integerVisit = this::integerVisit;
-        addVisit ("Integer", integerVisit );
-
-        BiFunction<JmmNode, String, String> identifierVisit = this::identifierVisit;
-        addVisit ("Identifier", identifierVisit );
-
         BiFunction<JmmNode, String, String> classDeclarationVisit = this::classDeclarationVisit;
         addVisit ("ClassDeclaration", classDeclarationVisit );
 
@@ -52,8 +47,6 @@ public class AstVisitor extends AJmmVisitor {
         BiFunction<JmmNode, String, String> varDeclarationVisit = this::varDeclarationVisit;
         addVisit ("VarDeclaration", varDeclarationVisit );
 
-        BiFunction<JmmNode, String, String> typeVisit = this::typeVisit;
-        addVisit ("Type", typeVisit );
     }
 
     public List<String> getImports(){return this.imports;}
@@ -66,19 +59,36 @@ public class AstVisitor extends AJmmVisitor {
 
     public List<String> getMethods(){return this.methods;}
 
-    public Type getReturnType(){return this.returnType;}
+    public Map<String, Type> getMethodTypes(){return this.methodTypes;}
 
-    public List<Symbol> getParameters(){return this.parameters;}
+    public Map<String, List<Symbol>> getMethodParameters(){return this.methodParameters;}
 
     public List<Symbol> getLocalVariables(){return this.localVariables;}
 
 
     private String classDeclarationVisit(JmmNode jmmNode, String s) {
-        var list = jmmNode.getChildren();
-        className = list.get(0).get("value");
-        if(jmmNode.hasAttribute("extend")) {
-            superString = list.get(1).get("value");
+
+        boolean extendedClass = jmmNode.hasAttribute("extend");
+
+        for (JmmNode child : jmmNode.getChildren()) {
+            if (Objects.equals(child.getKind(), "Identifier")) {
+
+                if (extendedClass) {
+                    switch (child.getIndexOfSelf()) {
+                        case 0:
+                            this.className = child.get("value");
+                            break;
+                        case 1:
+                            this.superString = child.get("value");
+                    }
+                } else {
+                    this.className = child.get("value");
+                }
+            } else {
+                visit(child);
+            }
         }
+
 //        System.out.println(jmmNode.getAttributes());
 //          - imprime atributos, no caso do teste Parameters não tem mas podes ver no teste ClassAndSupper
 //        System.out.println(list);
@@ -89,10 +99,49 @@ public class AstVisitor extends AJmmVisitor {
 //          - estava a pensar em fazer um for para percorrer os filhos e encontrar o MethodDeclaration caso tivesse muitos, e isso retorna o número de filhos do ClassDeclaration
 //        System.out.println(list.contains("MethodDeclaration"));
 //          - dá false e não sei porquê
+
         return "";
     }
 
     private String methodDeclarationVisit(JmmNode jmmNode, String s) {
+
+        this.parameters.clear();
+
+        String currentMethod = "";
+
+        for (int i=0; i<jmmNode.getChildren().size(); i++){
+            JmmNode child = jmmNode.getChildren().get(i);
+            boolean validParameter = Objects.equals(child.getKind(), "Identifier") || Objects.equals(child.getKind(), "Type");
+
+            if (!validParameter || i==jmmNode.getNumChildren()-1){
+                continue;
+            }
+
+            JmmNode nextChild = jmmNode.getChildren().get(i+1);
+
+            if (i == 0){
+                this.returnType = new Type(child.get("t"), false);
+            }
+            else if (i == 1) {
+                this.methods.add(child.get("value"));
+                methodTypes.put(child.get("value"), this.returnType);
+                currentMethod = child.get("value");
+            } else {
+                if (i % 2 == 0) {
+                    String typeName = child.get("t");
+                    String symbolName = nextChild.get("value");
+
+                    Type type = new Type(typeName, false);
+                    Symbol symbol = new Symbol(type, symbolName);
+
+                    this.parameters.add(symbol);
+                }
+            }
+
+        }
+
+        this.methodParameters.put(currentMethod, this.parameters);
+
         return "";
     }
 
@@ -107,18 +156,28 @@ public class AstVisitor extends AJmmVisitor {
 
     private String varDeclarationVisit(JmmNode jmmNode, String s) {
 
-        return "";
-    }
+        String symbolName = "";
+        String typeName = "";
 
-    private String typeVisit(JmmNode jmmNode, String s) {
-        return "";
-    }
 
-    private String identifierVisit(JmmNode jmmNode, String s) {
-        return "";
-    }
+        for (JmmNode child : jmmNode.getChildren()){
+            switch (child.getIndexOfSelf()){
+                case 0:
+                    typeName = child.get("t");
+                    break;
+                case 1:
+                    symbolName = child.get("value");
+                    break;
+            }
 
-    private String integerVisit(JmmNode jmmNode, String s) {
+        }
+
+        Type type = new Type(typeName, false);
+
+        Symbol newSymbol = new Symbol(type, symbolName);
+
+        this.fields.add(newSymbol);
+
         return "";
     }
 
