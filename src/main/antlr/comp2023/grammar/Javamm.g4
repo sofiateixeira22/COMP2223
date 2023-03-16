@@ -15,15 +15,15 @@ program
     ;
 
 importDeclaration
-    : 'import' ID ('.'ID)* ';'
+    : 'import' identifier ('.'identifier)* ';'
     ;
 
 classDeclaration
-    : 'class' ID ( 'extends' ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
+    : 'class' identifier ( extend='extends' identifier)? '{' (varDeclaration)* (methodDeclaration)* '}'
     ;
 
 varDeclaration
-    : type ID ';'
+    : type identifier ';'
     ;
 
 
@@ -33,10 +33,14 @@ methodDeclaration
     ;
 
 type
-    : 'int' '[' ']'
-    | 'boolean'
-    | 'int'
-    | ID
+    : t='int' '[' ']'
+    | t='boolean'
+    | t='int'
+    | t=ID
+    ;
+
+identifier
+    : value=ID
     ;
 
 statement
@@ -61,14 +65,14 @@ expression
     | expression '[' expression ']' #BinaryOp
     | expression '.' 'length' #UnaryOp
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
-    | 'new' 'int' '[' expression ']' #UnaryOp
-    | 'new' ID '('')' #Identifier
+    | 'new' 'int' '[' expression ']' #ArrayNew
+    | 'new' ID '('')' #ClassNew
     | '!' expression #UnaryOp
     | '(' expression ')' #UnaryOp
     | value=INTEGER #Integer
     | 'true' #Boolean
     | 'false' #Boolean
-    | value=ID #Identifier
-    | 'this' #Identifier
+    | value=ID #IdentifierExpr
+    | 'this' #ThisExpr
     ;
 

@@ -11,11 +11,11 @@ import java.util.function.BiFunction;
 
 public class AstVisitor extends AJmmVisitor {
 
-    List<String> imports;
+    List<String> imports = new ArrayList<>();
     String className;
     String superString;
     List<Symbol> fields;
-    List<String> methods;
+    List<String> methods = new ArrayList<>();
     Type returnType;
     List<Symbol> parameters;
     List<Symbol> localVariables;
@@ -74,17 +74,33 @@ public class AstVisitor extends AJmmVisitor {
 
 
     private String classDeclarationVisit(JmmNode jmmNode, String s) {
-
+        var list = jmmNode.getChildren();
+        className = list.get(0).get("value");
+        if(jmmNode.hasAttribute("extend")) {
+            superString = list.get(1).get("value");
+        }
+//        System.out.println(jmmNode.getAttributes());
+//          - imprime atributos, no caso do teste Parameters não tem mas podes ver no teste ClassAndSupper
+//        System.out.println(list);
+//          - imprime o que está dentro do ClassDeclaration
+//        System.out.println(jmmNode.getJmmChild(1));
+//          - imprime o segundo filho do ClassDeclaration neste caso o MethodDeclaration
+//        System.out.println(jmmNode.getNumChildren());
+//          - estava a pensar em fazer um for para percorrer os filhos e encontrar o MethodDeclaration caso tivesse muitos, e isso retorna o número de filhos do ClassDeclaration
+//        System.out.println(list.contains("MethodDeclaration"));
+//          - dá false e não sei porquê
         return "";
     }
 
     private String methodDeclarationVisit(JmmNode jmmNode, String s) {
-
         return "";
     }
 
     private String importDeclarationVisit(JmmNode jmmNode, String s) {
-
+        var list = jmmNode.getChildren();
+        for (var l:list) {
+            imports.add(l.get("value"));
+        }
 
         return "";
     }
