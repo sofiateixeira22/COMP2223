@@ -45,8 +45,16 @@ public class AstVisitor extends AJmmVisitor {
 
         BiFunction<JmmNode, String, String> importDeclarationVisit = this::importDeclarationVisit;
         addVisit ("ImportDeclaration", importDeclarationVisit );
-    }
 
+        BiFunction<JmmNode, String, String> methodDeclarationVisit = this::methodDeclarationVisit;
+        addVisit ("MethodDeclaration", methodDeclarationVisit );
+
+        BiFunction<JmmNode, String, String> varDeclarationVisit = this::varDeclarationVisit;
+        addVisit ("VarDeclaration", varDeclarationVisit );
+
+        BiFunction<JmmNode, String, String> typeVisit = this::typeVisit;
+        addVisit ("Type", typeVisit );
+    }
 
     public List<String> getImports(){return this.imports;}
 
@@ -64,13 +72,29 @@ public class AstVisitor extends AJmmVisitor {
 
     public List<Symbol> getLocalVariables(){return this.localVariables;}
 
+
+    private String classDeclarationVisit(JmmNode jmmNode, String s) {
+
+        return "";
+    }
+
+    private String methodDeclarationVisit(JmmNode jmmNode, String s) {
+
+        return "";
+    }
+
     private String importDeclarationVisit(JmmNode jmmNode, String s) {
 
 
         return "";
     }
-    private String classDeclarationVisit(JmmNode jmmNode, String s) {
 
+    private String varDeclarationVisit(JmmNode jmmNode, String s) {
+
+        return "";
+    }
+
+    private String typeVisit(JmmNode jmmNode, String s) {
         return "";
     }
 

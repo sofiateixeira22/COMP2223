@@ -38,18 +38,29 @@ public class SimpleParser implements JmmParser {
     @Override
     public JmmParserResult parse(String jmmCode, String startingRule, Map<String, String> config) {
 
+        System.out.println("----------------------------");
+
+        System.out.println(jmmCode);
+
+        System.out.println("############################");
+
         try {
             // Convert code string into a character stream
             var input = new ANTLRInputStream(jmmCode);
             // Transform characters into tokens using the lexer
-            var lex = new JavammLexer(input);
+            var lex = new pt.up.fe.comp2023.JavammLexer(input);
             // Wrap lexer around a token stream
             var tokens = new CommonTokenStream(lex);
             // Transforms tokens into a parse tree
-            var parser = new JavammParser(tokens);
+            var parser = new pt.up.fe.comp2023.JavammParser(tokens);
 
             // Convert ANTLR CST to JmmNode AST
             var report = AntlrParser.parse(lex, parser, startingRule);
+
+            System.out.println(report.get().toTree());
+
+            System.out.println("----------------------------");
+
             if(parser.getNumberOfSyntaxErrors() > 0) {
                 return JmmParserResult.newError(new Report(ReportType.ERROR, Stage.SYNTATIC, -1,
                         "There were " + parser.getNumberOfSyntaxErrors() + "syntax errors during parsing, terminating"));
