@@ -1,11 +1,24 @@
 package pt.up.fe.comp2023;
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 
 public class AstVisitor extends AJmmVisitor {
+
+    List<String> imports;
+    String className;
+    String superString;
+    List<Symbol> fields;
+    List<String> methods;
+    Type returnType;
+    List<Symbol> parameters;
+    List<Symbol> localVariables;
 
 
     public AstVisitor(){
@@ -34,40 +47,43 @@ public class AstVisitor extends AJmmVisitor {
         addVisit ("ImportDeclaration", importDeclarationVisit );
     }
 
-    private String importDeclarationVisit(JmmNode jmmNode, String s) {
-        String ret = "placeholder";
-        return ret;
-    }
 
+    public List<String> getImports(){return this.imports;}
+
+    public String getClassName(){return this.className;}
+
+    public String getSuperString(){return this.superString;}
+
+    public List<Symbol> getFields(){return this.fields;}
+
+    public List<String> getMethods(){return this.methods;}
+
+    public Type getReturnType(){return this.returnType;}
+
+    public List<Symbol> getParameters(){return this.parameters;}
+
+    public List<Symbol> getLocalVariables(){return this.localVariables;}
+
+    private String importDeclarationVisit(JmmNode jmmNode, String s) {
+
+
+        return "";
+    }
     private String classDeclarationVisit(JmmNode jmmNode, String s) {
 
-        System.out.println("HERE...........");
-
-
-        String ret = "";
-        for ( JmmNode child : jmmNode . getChildren ()){
-            ret += visit (child ,"");
-            ret += "\n";
-        }
-
-        System.out.println(ret);
-
-        return ret;
+        return "";
     }
 
     private String identifierVisit(JmmNode jmmNode, String s) {
-        String ret = "placeholder";
-        return ret;
+        return "";
     }
 
     private String integerVisit(JmmNode jmmNode, String s) {
-        String ret = "placeholder";
-        return ret;
+        return "";
     }
 
     private String assignmentVisit(JmmNode jmmNode, String s) {
-        String ret = "placeholder";
-        return ret;
+        return "";
     }
 
     private String programVisit(JmmNode jmmNode, String s) {
@@ -89,7 +105,6 @@ public class AstVisitor extends AJmmVisitor {
     public Object visit(JmmNode jmmNode) {
         return super.visit(jmmNode);
     }
-
 
     @Override
     public void addVisit(String kind, BiFunction method) {

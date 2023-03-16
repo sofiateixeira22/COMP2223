@@ -25,19 +25,18 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     List<Symbol> localVariables;
 
     public SymbolTable(JmmParserResult jmmParserResult){
-        Map<String, Object> infoMap = new HashMap<>();
-
-        infoMap.put("imports", imports);
-        infoMap.put("className", className);
-        infoMap.put("super", superString);
-        infoMap.put("fields", fields);
-        infoMap.put("methods", methods);
-        infoMap.put("returnType", returnType);
-        infoMap.put("parameters", parameters);
-        infoMap.put("localVariables", localVariables);
 
         AstVisitor visitor = new AstVisitor();
         visitor.visit(jmmParserResult.getRootNode(), "");
+
+        this.imports = visitor.getImports();
+        this.className = visitor.getClassName();
+        this.superString = visitor.getSuperString();
+        this.fields = visitor.getFields();
+        this.methods = visitor.getMethods();
+        this.returnType = visitor.getReturnType();
+        this.parameters = visitor.getParameters();
+        this.localVariables = visitor.getLocalVariables();
 
 
     }
