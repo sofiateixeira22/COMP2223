@@ -33,7 +33,7 @@ methodDeclaration
     ;
 
 type
-    : t='int' '[' ']'
+    : t='int[]'
     | t='boolean'
     | t='int'
     | t=ID

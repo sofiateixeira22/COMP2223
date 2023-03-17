@@ -17,7 +17,6 @@ public class AstVisitor extends AJmmVisitor {
     List<String> methods = new ArrayList<>();
     Type returnType;
     Map<String, Type> methodTypes = new HashMap<>();
-    List<Symbol> parameters = new ArrayList<>();
     Map<String, List<Symbol>> methodParameters = new HashMap<>();
     List<Symbol> localVariables;
 
@@ -89,58 +88,53 @@ public class AstVisitor extends AJmmVisitor {
             }
         }
 
-//        System.out.println(jmmNode.getAttributes());
-//          - imprime atributos, no caso do teste Parameters não tem mas podes ver no teste ClassAndSupper
-//        System.out.println(list);
-//          - imprime o que está dentro do ClassDeclaration
-//        System.out.println(jmmNode.getJmmChild(1));
-//          - imprime o segundo filho do ClassDeclaration neste caso o MethodDeclaration
-//        System.out.println(jmmNode.getNumChildren());
-//          - estava a pensar em fazer um for para percorrer os filhos e encontrar o MethodDeclaration caso tivesse muitos, e isso retorna o número de filhos do ClassDeclaration
-//        System.out.println(list.contains("MethodDeclaration"));
-//          - dá false e não sei porquê
-
         return "";
     }
 
     private String methodDeclarationVisit(JmmNode jmmNode, String s) {
 
-        this.parameters.clear();
+        List<Symbol> parameters = new ArrayList<>();
 
         String currentMethod = "";
 
-        for (int i=0; i<jmmNode.getChildren().size(); i++){
-            JmmNode child = jmmNode.getChildren().get(i);
+        Type methodReturnType;
+
+        for (int i=0; i<jmmNode.getNumChildren(); i=i+2){
+            JmmNode child = jmmNode.getJmmChild(i);
             boolean validParameter = Objects.equals(child.getKind(), "Identifier") || Objects.equals(child.getKind(), "Type");
 
-            if (!validParameter || i==jmmNode.getNumChildren()-1){
+            if (!validParameter){
                 continue;
             }
 
-            JmmNode nextChild = jmmNode.getChildren().get(i+1);
+            JmmNode nextChild = jmmNode.getJmmChild(i+1);
 
             if (i == 0){
-                this.returnType = new Type(child.get("t"), false);
-            }
-            else if (i == 1) {
-                this.methods.add(child.get("value"));
-                methodTypes.put(child.get("value"), this.returnType);
-                currentMethod = child.get("value");
-            } else {
-                if (i % 2 == 0) {
-                    String typeName = child.get("t");
-                    String symbolName = nextChild.get("value");
+                String last2Chars = child.get("t").length() > 2 ? child.get("t").substring(child.get("t").length() - 2) : child.get("t");
+                boolean isArray = (Objects.equals(last2Chars, "[]"));
+                String returnType = child.get("t");
 
-                    Type type = new Type(typeName, false);
-                    Symbol symbol = new Symbol(type, symbolName);
-
-                    this.parameters.add(symbol);
+                if (isArray){
+                    returnType = child.get("t").substring(0,child.get("t").length() - 2);
                 }
-            }
 
+                methodReturnType = new Type(returnType, isArray);
+                this.methods.add(nextChild.get("value"));
+                methodTypes.put(nextChild.get("value"), methodReturnType);
+                currentMethod = nextChild.get("value");
+            } else {
+                String typeName = child.get("t");
+                String symbolName = nextChild.get("value");
+                boolean isArray = false;
+
+                Type type = new Type(typeName, isArray);
+                Symbol symbol = new Symbol(type, symbolName);
+
+                parameters.add(symbol);
+            }
         }
 
-        this.methodParameters.put(currentMethod, this.parameters);
+        this.methodParameters.put(currentMethod, parameters);
 
         return "";
     }
@@ -172,7 +166,14 @@ public class AstVisitor extends AJmmVisitor {
 
         }
 
-        Type type = new Type(typeName, false);
+        boolean isArray = false;
+        String substring = typeName.substring(Math.max(typeName.length() - 2, 0));
+
+        if (substring.equals("[]")){
+            isArray = true;
+        }
+
+        Type type = new Type(typeName, isArray);
 
         Symbol newSymbol = new Symbol(type, symbolName);
 
