@@ -6,6 +6,8 @@ grammar Javamm;
 
 INTEGER : [0-9]+ ;
 ID : [a-zA-Z_][a-zA-Z_0-9]* ;
+COMMENT : '/*' .*? '*/' -> skip ;
+LINE_COMMENT : '//' ~[\r\n]* -> skip ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -65,7 +67,7 @@ expression
     | expression '[' expression ']' #BinaryOp
     | expression '.' 'length' #UnaryOp
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
-    | 'new' 'int' '[' expression ']' #ArrayNew
+    | 'new' type '[' expression ']' #ArrayNew
     | 'new' ID '('')' #ClassNew
     | '!' expression #UnaryOp
     | '(' expression ')' #UnaryOp
