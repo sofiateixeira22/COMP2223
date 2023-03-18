@@ -55,22 +55,24 @@ statement
     ;
 
 expression
-    : expression ('++' | '--') #UnaryOp
-    | expression op=('*' | '/') expression #BinaryOp
+    : expression '[' expression ']' #BinaryOp
+    | expression '.' 'length' #UnaryOp
+    | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
+    | '(' expression ')' #UnaryOp
+    | expression ('++' | '--') #UnaryOp
+    | ('+' | '-' | '!' | '~' | '++' | '--') expression #UnaryOp
+    | 'new' type '[' expression ']' #ArrayNew
+    | 'new' ID '('')' #ClassNew
+    | expression op=('*' | '/' | '%') expression #BinaryOp
     | expression op=('+' | '-') expression #BinaryOp
     | expression op=('<' | '>' | '<=' | '>=') expression #BinaryOp
     | expression op=('==' | '!=') #BinaryOp
     | expression '&' expression #BinaryOp
+    | expression '^' expression #BinaryOp
     | expression '|' expression #BinaryOp
     | expression '&&' expression #BinaryOp
     | expression '||' expression #BinaryOp
-    | expression '[' expression ']' #BinaryOp
-    | expression '.' 'length' #UnaryOp
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
-    | 'new' type '[' expression ']' #ArrayNew
-    | 'new' ID '('')' #ClassNew
-    | '!' expression #UnaryOp
-    | '(' expression ')' #UnaryOp
+    | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' | '<<=' | '>>=' | '>>>=' ) expression #BinaryOp
     | value=INTEGER #Integer
     | 'true' #Boolean
     | 'false' #Boolean
