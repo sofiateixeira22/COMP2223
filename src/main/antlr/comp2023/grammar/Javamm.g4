@@ -32,12 +32,15 @@ methodDeclaration
     | 'public'? 'static' type identifier '(' type '[' ']' identifier ')' '{' (varDeclaration)* (statement)* '}'
     ;
 
-type
-    : t='int[]'
-    | t='boolean'
-    | t='int'
-    | t=ID
-    ;
+    type
+        : t='int[]'
+        | t='boolean'
+        | t='int'
+        | t='string[]'
+        | t='boolean[]'
+        | t=ID
+        ;
+
 
 identifier
     : value=ID
