@@ -26,8 +26,6 @@ classDeclaration
 
 varDeclaration
     : type identifier ';'
-    | type identifier '=' value=INTEGER ';'
-    | type identifier '=' '"' identifier '"' ';'
     ;
 
 
