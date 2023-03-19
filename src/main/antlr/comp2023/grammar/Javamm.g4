@@ -26,6 +26,8 @@ classDeclaration
 
 varDeclaration
     : type identifier ';'
+    | type identifier '=' value=INTEGER ';'
+    | type identifier '=' '"' identifier '"' ';'
     ;
 
 
@@ -50,8 +52,8 @@ statement
     | 'if' '(' expression ')' statement 'else' statement
     | 'while' '(' expression ')' statement
     | expression ';'
-    | ID '=' expression ';'
-    | ID '[' expression ']' '=' expression ';'
+    | identifier '=' expression ';'
+    | identifier '[' expression ']' '=' expression ';'
     ;
 
 expression
