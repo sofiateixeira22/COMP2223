@@ -55,10 +55,10 @@ statement
     ;
 
 expression
-    : expression '[' expression ']' #BinaryOp
+    : '(' expression ')' #UnaryOp
+    | expression '[' expression ']' #BinaryOp
     | expression '.' 'length' #UnaryOp
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
-    | '(' expression ')' #UnaryOp
     | expression ('++' | '--') #UnaryOp
     | ('+' | '-' | '!' | '~' | '++' | '--') expression #UnaryOp
     | 'new' type '[' expression ']' #ArrayNew
