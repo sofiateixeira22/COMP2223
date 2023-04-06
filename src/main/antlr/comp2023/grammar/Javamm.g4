@@ -58,24 +58,21 @@ statement
     ;
 
 expression
-    : '(' expression ')' #UnaryOp
+    : '(' expression ')' #Parentheses
     | expression '[' expression ']' #BinaryOp
-    | expression '.' 'length' #UnaryOp
+    | expression '.' 'length' #Length
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
-    | expression ('++' | '--') #UnaryOp
-    | ('+' | '-' | '!' | '~' | '++' | '--') expression #UnaryOp
+    | expression ('++' | '--') #UnaryPostOp
+    | ('!' | '++' | '--') expression #UnaryPreOp
     | 'new' type '[' expression ']' #ArrayNew
     | 'new' ID '('')' #ClassNew
-    | expression op=('*' | '/' | '%') expression #BinaryOp
-    | expression op=('+' | '-') expression #BinaryOp
-    | expression op=('<' | '>' | '<=' | '>=') expression #BinaryOp
-    | expression op=('==' | '!=') #BinaryOp
-    | expression '&' expression #BinaryOp
-    | expression '^' expression #BinaryOp
-    | expression '|' expression #BinaryOp
-    | expression '&&' expression #BinaryOp
-    | expression '||' expression #BinaryOp
-    | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' | '<<=' | '>>=' | '>>>=' ) expression #BinaryOp
+    | expression op=('*' | '/' | '%') expression #MultiplicativeOp
+    | expression op=('+' | '-') expression #AdditiveOp
+    | expression op=('<' | '>' | '<=' | '>=') expression #RelationalOp
+    | expression op=('==' | '!=') #EqualityOp
+    | expression '&&' expression #LogicalOp
+    | expression '||' expression #LogicalOp
+    | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=') expression #AssignmentOp
     | value=INTEGER #Integer
     | 'true' #Boolean
     | 'false' #Boolean
