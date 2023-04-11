@@ -6,6 +6,8 @@ grammar Javamm;
 
 INTEGER : [0-9]+ ;
 ID : [a-zA-Z_][a-zA-Z_0-9]* ;
+COMMENT : '/*' .*? '*/' -> skip ;
+LINE_COMMENT : '//' ~[\r\n]* -> skip ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -32,12 +34,15 @@ methodDeclaration
     | 'public'? 'static' type identifier '(' type '[' ']' identifier ')' '{' (varDeclaration)* (statement)* '}'
     ;
 
-type
-    : t='int[]'
-    | t='boolean'
-    | t='int'
-    | t=ID
-    ;
+    type
+        : t='int[]'
+        | t='boolean'
+        | t='int'
+        | t='string[]'
+        | t='boolean[]'
+        | t=ID
+        ;
+
 
 identifier
     : value=ID
@@ -48,27 +53,26 @@ statement
     | 'if' '(' expression ')' statement 'else' statement
     | 'while' '(' expression ')' statement
     | expression ';'
-    | ID '=' expression ';'
-    | ID '[' expression ']' '=' expression ';'
+    | identifier '=' expression ';'
+    | identifier '[' expression ']' '=' expression ';'
     ;
 
 expression
-    : expression ('++' | '--') #UnaryOp
-    | expression op=('*' | '/') expression #BinaryOp
-    | expression op=('+' | '-') expression #BinaryOp
-    | expression op=('<' | '>' | '<=' | '>=') expression #BinaryOp
-    | expression op=('==' | '!=') #BinaryOp
-    | expression '&' expression #BinaryOp
-    | expression '|' expression #BinaryOp
-    | expression '&&' expression #BinaryOp
-    | expression '||' expression #BinaryOp
+    : '(' expression ')' #Parentheses
     | expression '[' expression ']' #BinaryOp
-    | expression '.' 'length' #UnaryOp
+    | expression '.' 'length' #Length
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
-    | 'new' 'int' '[' expression ']' #ArrayNew
+    | expression ('++' | '--') #UnaryPostOp
+    | ('!' | '++' | '--') expression #UnaryPreOp
+    | 'new' type '[' expression ']' #ArrayNew
     | 'new' ID '('')' #ClassNew
-    | '!' expression #UnaryOp
-    | '(' expression ')' #UnaryOp
+    | expression op=('*' | '/' | '%') expression #MultiplicativeOp
+    | expression op=('+' | '-') expression #AdditiveOp
+    | expression op=('<' | '>' | '<=' | '>=') expression #RelationalOp
+    | expression op=('==' | '!=') #EqualityOp
+    | expression '&&' expression #LogicalOp
+    | expression '||' expression #LogicalOp
+    | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=') expression #AssignmentOp
     | value=INTEGER #Integer
     | 'true' #Boolean
     | 'false' #Boolean
