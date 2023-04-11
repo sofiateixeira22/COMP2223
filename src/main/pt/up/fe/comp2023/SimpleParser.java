@@ -38,11 +38,11 @@ public class SimpleParser implements JmmParser {
     @Override
     public JmmParserResult parse(String jmmCode, String startingRule, Map<String, String> config) {
 
-        System.out.println("----------------------------");
+        //System.out.println("----------------------------");
 
-        System.out.println(jmmCode);
+        //System.out.println(jmmCode);
 
-        System.out.println("############################");
+        //System.out.println("############################");
 
         try {
             // Convert code string into a character stream
@@ -57,9 +57,9 @@ public class SimpleParser implements JmmParser {
             // Convert ANTLR CST to JmmNode AST
             var report = AntlrParser.parse(lex, parser, startingRule);
 
-            System.out.println(report.get().toTree());
+            //System.out.println(report.get().toTree());
 
-            System.out.println("----------------------------");
+            //System.out.println("----------------------------");
 
             if(parser.getNumberOfSyntaxErrors() > 0) {
                 return JmmParserResult.newError(new Report(ReportType.ERROR, Stage.SYNTATIC, -1,
