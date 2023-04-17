@@ -31,15 +31,15 @@ varDeclaration
 
 methodDeclaration
     : 'public'? type identifier '(' (type identifier ( ',' type identifier)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}'
-    | 'public'? 'static' type identifier '(' type '[' ']' identifier ')' '{' (varDeclaration)* (statement)* '}'
+    | 'public'? 'static' type identifier '(' type identifier ')' '{' (varDeclaration)* (statement)* '}'
     ;
 
     type
         : t='int[]'
+        | t='boolean[]'
+        | t='String[]'
         | t='boolean'
         | t='int'
-        | t='string[]'
-        | t='boolean[]'
         | t=ID
         ;
 
@@ -72,7 +72,7 @@ expression
     | expression op=('==' | '!=') #EqualityOp
     | expression '&&' expression #LogicalOp
     | expression '||' expression #LogicalOp
-    | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=') expression #AssignmentOp
+    | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=') expression #AssignmenOp
     | value=INTEGER #Integer
     | 'true' #Boolean
     | 'false' #Boolean
