@@ -12,6 +12,7 @@ public class Optimization implements JmmOptimization {
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
         this.code = new StringBuilder();
         this.symbolTable = jmmSemanticsResult.getSymbolTable();
+        System.out.println(this.symbolTable.print());
 
         importVisit();
         classDeclarationVisit();
@@ -33,6 +34,7 @@ public class Optimization implements JmmOptimization {
         for (var importString: this.symbolTable.getImports()) {
             this.code.append("import " + importString + ";\n");
         }
+        this.code.append("\n");
     }
 
     public void classDeclarationVisit() {
@@ -44,24 +46,24 @@ public class Optimization implements JmmOptimization {
         if (superClass != null) {
             this.code.append("extends " + superClass + " ");
         }
-        this.code.append("{\n");
+        this.code.append("{\n\n");
 
         varDeclarationVisit(); //global variables
 
-        this.code.append(".construct " + this.symbolTable.getClassName() + "().V {\n");
-        this.code.append("invokespecial(this, \"<init>\").V;\n");
-        this.code.append("}\n");
+        this.code.append("\n\t.construct " + this.symbolTable.getClassName() + "().V {\n");
+        this.code.append("\t\tinvokespecial(this, \"<init>\").V;\n");
+        this.code.append("\t}\n\n");
 
         methodVisit();
 
-        this.code.append("\n}");
+        this.code.append("}");
     }
 
     public void varDeclarationVisit() {
         System.out.println("** Var Declaration Visit **");
 
         for (var fieldString: this.symbolTable.getFields()) {
-            this.code.append(".field public " + fieldString.getName());
+            this.code.append("\t.field public " + fieldString.getName());
 
             if (fieldString.getType().getName().equals("int"))
                 this.code.append(".i32");
@@ -78,9 +80,9 @@ public class Optimization implements JmmOptimization {
 
         for (var methodString: this.symbolTable.getMethods()) {
             if(methodString.equals("main"))
-                this.code.append(".method public static " + methodString + "(");
+                this.code.append("\t.method public static " + methodString + "(");
             else
-                this.code.append(".method public " + methodString + "(");
+                this.code.append("\t.method public " + methodString + "(");
 
             methodParametersVisit(methodString);
 
@@ -95,9 +97,13 @@ public class Optimization implements JmmOptimization {
             this.code.append("{\n");
 
             //TODO: things inside method
-            System.out.println(this.symbolTable.getFields());
+            //TODO: how to declare vars
+            //TODO: how to get expressions
+            //TODO: how to get return var
+            //System.out.println(this.symbolTable.getLocalVariables(methodString));
+            //System.out.println("here");
 
-            this.code.append("}\n");
+            this.code.append("\t}\n\n");
         }
     }
 
