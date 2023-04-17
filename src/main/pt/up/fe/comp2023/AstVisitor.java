@@ -18,7 +18,7 @@ public class AstVisitor extends AJmmVisitor {
     Type returnType;
     Map<String, Type> methodTypes = new HashMap<>();
     Map<String, List<Symbol>> methodParameters = new HashMap<>();
-    List<Symbol> localVariables;
+    List<Symbol> localVariables = new ArrayList<>();
 
 
     public AstVisitor(){
@@ -64,7 +64,6 @@ public class AstVisitor extends AJmmVisitor {
 
     public List<Symbol> getLocalVariables(){return this.localVariables;}
 
-
     private String classDeclarationVisit(JmmNode jmmNode, String s) {
 
         boolean extendedClass = jmmNode.hasAttribute("extend");
@@ -97,19 +96,26 @@ public class AstVisitor extends AJmmVisitor {
 
         String currentMethod = "";
 
+        String type = "Type";
+        String identifier = "Identifier";
+        String varDeclaration = "VarDeclaration";
+
         Type methodReturnType;
 
-        for (int i=0; i<jmmNode.getNumChildren(); i=i+2){
+        for (int i=0; i<jmmNode.getNumChildren(); i=i+1){
+
             JmmNode child = jmmNode.getJmmChild(i);
-            boolean validParameter = Objects.equals(child.getKind(), "Identifier") || Objects.equals(child.getKind(), "Type");
+
+            String childKind = child.getKind();
+
+            boolean validParameter = Objects.equals(child.getKind(), identifier) || Objects.equals(child.getKind(), type) || Objects.equals(child.getKind(), varDeclaration);
 
             if (!validParameter){
                 continue;
             }
 
-            JmmNode nextChild = jmmNode.getJmmChild(i+1);
-
             if (i == 0){
+                JmmNode nextChild = jmmNode.getJmmChild(i+1);
                 String last2Chars = child.get("t").length() > 2 ? child.get("t").substring(child.get("t").length() - 2) : child.get("t");
                 boolean isArray = (Objects.equals(last2Chars, "[]"));
                 String returnType = child.get("t");
@@ -122,15 +128,19 @@ public class AstVisitor extends AJmmVisitor {
                 this.methods.add(nextChild.get("value"));
                 methodTypes.put(nextChild.get("value"), methodReturnType);
                 currentMethod = nextChild.get("value");
-            } else {
+            } else if (childKind.equals(type)){
+                JmmNode nextChild = jmmNode.getJmmChild(i+1);
                 String typeName = child.get("t");
                 String symbolName = nextChild.get("value");
                 boolean isArray = false;
 
-                Type type = new Type(typeName, isArray);
-                Symbol symbol = new Symbol(type, symbolName);
+                Type mtype = new Type(typeName, isArray);
+                Symbol symbol = new Symbol(mtype, symbolName);
 
                 parameters.add(symbol);
+            }
+            else if (childKind.equals(varDeclaration)){
+                visit(child);
             }
         }
 
@@ -152,6 +162,8 @@ public class AstVisitor extends AJmmVisitor {
 
         String symbolName = "";
         String typeName = "";
+
+        String methodCaller = jmmNode.getJmmParent().toString();
 
 
         for (JmmNode child : jmmNode.getChildren()){
@@ -177,7 +189,12 @@ public class AstVisitor extends AJmmVisitor {
 
         Symbol newSymbol = new Symbol(type, symbolName);
 
-        this.fields.add(newSymbol);
+        if (methodCaller.equals("MethodDeclaration")){
+            this.localVariables.add(newSymbol);
+        }
+        else {
+            this.fields.add(newSymbol);
+        }
 
         return "";
     }
