@@ -29,12 +29,8 @@ public class Optimization implements JmmOptimization {
 
         System.out.println("\n** Code **\n\n" + this.code);
 
-        //System.out.println("again " + symbolTable.getSuper());
-        //System.out.println("hello");
-        //System.out.println(jmmSemanticsResult.getRootNode()); //Gets Program
         System.out.println(jmmSemanticsResult.getRootNode().toTree()); //Gets the tree
-        //System.out.println(jmmSemanticsResult.getReports());
-        //System.out.println(jmmSemanticsResult.getSymbolTable().print());
+
         return new OllirResult(jmmSemanticsResult, code.toString(), new ArrayList<>());
     }
 
@@ -71,7 +67,6 @@ public class Optimization implements JmmOptimization {
         methodVisit();
 
         this.code.append("}");
-        //System.out.println(this.jmmSemanticsResult.getRootNode().getJmmChild(this.indexFirstLevel-1).getChildren());
     }
 
     public void varDeclarationVisit() {
@@ -83,15 +78,29 @@ public class Optimization implements JmmOptimization {
             indexSecondLevel+=1;
             this.code.append("\t.field public " + fieldString.getName());
 
+            System.out.println(fieldString);
+
+            if(fieldString.getType().isArray()) {
+                this.code.append(".array");
+                if(fieldString.getType().getName().equals("int[]"))
+                    this.code.append(".i32");
+                else if (fieldString.getType().getName().equals("boolean[]"))
+                    this.code.append(".bool");
+                else if (fieldString.getType().getName().equals("String[]"))
+                    this.code.append(".String");
+            }
+
             if(fieldString.getType().getName().equals("int"))
                 this.code.append(".i32");
             else if(fieldString.getType().getName().equals("boolean"))
                 this.code.append(".bool");
+            else if(fieldString.getType().getName().equals("String"))
+                this.code.append(".String");
             else this.code.append(".V");
 
             this.code.append(";\n");
         }
-        this.code.append("\n");
+        //this.code.append("\n");
     }
 
     public void methodVisit() {
@@ -116,22 +125,10 @@ public class Optimization implements JmmOptimization {
                 this.code.append(".bool ");
             else this.code.append(".V ");
 
-            //System.out.println(this.symbolTable.getReturnType(methodString));
-
             this.code.append("{\n");
 
-            //TODO: things inside method
-            //TODO: how to declare vars
-            //TODO: how to get expressions
-
-            //store local variables so that I know their type for assignments
             var localVariables = this.symbolTable.getLocalVariables(methodString);
-            System.out.println(localVariables);
-//            for (var local : localVariables) {
-//                System.out.println(local.getName());
-//            }
 
-            //things inside method
             var method = this.jmmSemanticsResult.getRootNode().getJmmChild(this.indexFirstLevel-1).getJmmChild(this.indexSecondLevel-1);
 
             for(JmmNode jmmNode : method.getChildren()) {
