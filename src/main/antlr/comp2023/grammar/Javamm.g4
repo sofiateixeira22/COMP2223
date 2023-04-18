@@ -61,7 +61,7 @@ expression
     : '(' expression ')' #Parentheses
     | expression '[' expression ']' #BinaryOp
     | expression '.' 'length' #Length
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
+    | expression '.' value=ID '(' ( expression ( ',' expression )* )? ')' #MethodInvocation
     | expression ('++' | '--') #UnaryPostOp
     | ('!' | '++' | '--') expression #UnaryPreOp
     | 'new' type '[' expression ']' #ArrayNew
@@ -72,7 +72,7 @@ expression
     | expression op=('==' | '!=') #EqualityOp
     | expression '&&' expression #LogicalOp
     | expression '||' expression #LogicalOp
-    | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=') expression #AssignmenOp
+    | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=') expression #AssignmentOp
     | value=INTEGER #Integer
     | 'true' #Boolean
     | 'false' #Boolean
