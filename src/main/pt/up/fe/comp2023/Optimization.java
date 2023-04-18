@@ -1,11 +1,8 @@
 package pt.up.fe.comp2023;
 
-import org.antlr.v4.runtime.misc.Pair;
-import org.hamcrest.Condition;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
-import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
