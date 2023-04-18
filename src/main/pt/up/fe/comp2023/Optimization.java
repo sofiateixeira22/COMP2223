@@ -40,10 +40,24 @@ public class Optimization implements JmmOptimization {
     public void importVisit() {
         System.out.println("** Import Visit **");
 
-        for(var importString: this.symbolTable.getImports()) {
+        var root = jmmSemanticsResult.getRootNode();
+
+        int numImports = 0;
+        for(var child : root.getChildren())
+            if(child.getKind().equals("ImportDeclaration")) numImports+=1;
+
+        for(var i = 0; i < numImports; i++) {
             indexFirstLevel+=1;
-            this.code.append("import " + importString + ";\n");
+            this.code.append("import ");
+            if(root.getJmmChild(i).getNumChildren() > 1) {
+                var size = root.getJmmChild(i).getNumChildren();
+                for (int j = 0; j < size-1; j++) {
+                    this.code.append(root.getJmmChild(i).getJmmChild(j).get("value") + ".");
+                }
+                this.code.append(root.getJmmChild(i).getJmmChild(size-1).get("value") + ";\n");
+            } else this.code.append(root.getJmmChild(i).getJmmChild(0).get("value") + ";\n");
         }
+
         this.code.append("\n");
     }
 
