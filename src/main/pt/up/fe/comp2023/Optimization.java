@@ -1,9 +1,11 @@
 package pt.up.fe.comp2023;
 
-import org.specs.comp.ollir.*;
+import org.antlr.v4.runtime.misc.Pair;
+import org.hamcrest.Condition;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
@@ -16,6 +18,7 @@ public class Optimization implements JmmOptimization {
     private int indexFirstLevel = 0;
     private int indexSecondLevel = 0;
     private JmmSemanticsResult jmmSemanticsResult;
+    private StringBuilder operationBuilder = new StringBuilder();
 
     @Override
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
@@ -60,7 +63,7 @@ public class Optimization implements JmmOptimization {
 
         varDeclarationVisit(); //global variables
 
-        this.code.append("\t.construct " + this.symbolTable.getClassName() + "().V {\n");
+        this.code.append("\n\t.construct " + this.symbolTable.getClassName() + "().V {\n");
         this.code.append("\t\tinvokespecial(this, \"<init>\").V;\n");
         this.code.append("\t}\n\n");
 
@@ -73,31 +76,15 @@ public class Optimization implements JmmOptimization {
         System.out.println("** Var Declaration Visit **");
 
         this.code.append("\n");
-
         for(var fieldString: this.symbolTable.getFields()) {
             indexSecondLevel+=1;
             this.code.append("\t.field public " + fieldString.getName());
 
-            System.out.println(fieldString);
-
-            if(fieldString.getType().isArray()) {
-                this.code.append(".array");
-                if(fieldString.getType().getName().equals("int[]"))
-                    this.code.append(".i32");
-                else if (fieldString.getType().getName().equals("boolean[]"))
-                    this.code.append(".bool");
-                else if (fieldString.getType().getName().equals("String[]"))
-                    this.code.append(".String");
-            } else {
-                if(fieldString.getType().getName().equals("int"))
-                    this.code.append(".i32");
-                else if(fieldString.getType().getName().equals("boolean"))
-                    this.code.append(".bool");
-                else if(fieldString.getType().getName().equals("String"))
-                    this.code.append(".String");
-                else this.code.append(".V");
-            }
-
+            var type = fieldString.getType();
+            if(type.isArray()) this.code.append(".array");
+            if(type.getName().equals("int[]") || type.getName().equals("int")) this.code.append(".i32");
+            if(type.getName().equals("boolean[]") || type.getName().equals("boolean")) this.code.append(".bool");
+            if(type.getName().equals(("String[]")) || type.getName().equals("String")) this.code.append(".String");
 
             this.code.append(";\n");
         }
@@ -109,10 +96,9 @@ public class Optimization implements JmmOptimization {
 
         for(var methodString: this.symbolTable.getMethods()) {
             indexSecondLevel+=1;
-            if(methodString.equals("main"))
-                this.code.append("\t.method public static " + methodString + "(");
-            else
-                this.code.append("\t.method public " + methodString + "(");
+
+            if(methodString.equals("main")) this.code.append("\t.method public static " + methodString + "(");
+            else this.code.append("\t.method public " + methodString + "(");
 
             methodParametersVisit(methodString);
 
@@ -120,10 +106,8 @@ public class Optimization implements JmmOptimization {
 
             var returnType = this.symbolTable.getReturnType(methodString).getName();
 
-            if(returnType.equals("int"))
-                this.code.append(".i32 ");
-            else if (returnType.equals("boolean"))
-                this.code.append(".bool ");
+            if(returnType.equals("int")) this.code.append(".i32 ");
+            else if (returnType.equals("boolean")) this.code.append(".bool ");
             else this.code.append(".V ");
 
             this.code.append("{\n");
@@ -134,29 +118,7 @@ public class Optimization implements JmmOptimization {
 
             for(JmmNode jmmNode : method.getChildren()) {
                 if(jmmNode.getKind().equals("Statement")) {
-                    var statement = statementVisit(jmmNode);
-                    for(var localVar : localVariables) {
-                        if(!statement.isEmpty() && statement.get(0).equals("Assignment")) {
-                            if(localVar.getName().equals(statement.get(1))) {
-                                if(localVar.getType().getName().equals("int")) {
-                                    this.code.append("\t\t" + statement.get(1) + ".i32 :=.i32 " + statement.get(2) + ".i32;\n");
-                                }
-                                if(localVar.getType().getName().equals("bool")) {
-                                    this.code.append("\t\t" + statement.get(1) + ".bool :=.bool " + statement.get(2) + ".bool;\n");
-                                }
-                            }
-                        }
-                        if(!statement.isEmpty() && statement.get(0).equals("MethodInvocation")) {
-                            if(localVar.getName().equals(statement.get(3))) {
-                                if(localVar.getType().getName().equals("int")) {
-                                    this.code.append("\t\tinvokestatic(" + statement.get(2) + ", \"" + statement.get(1) + "\", " + statement.get(3) + ".i32).V;\n");
-                                }
-                                if(localVar.getType().getName().equals("boolean")) {
-                                    this.code.append("\t\tinvokestatic(" + statement.get(2) + ", \"" + statement.get(1) + "\", " + statement.get(3) + ".bool).V;\n");
-                                }
-                            }
-                        }
-                    }
+                    statementVisit(jmmNode, localVariables);
                 }
             }
 
@@ -176,87 +138,108 @@ public class Optimization implements JmmOptimization {
         for(var parameterString: this.symbolTable.getParameters(methodString)) {
             this.code.append(parameterString.getName());
 
-            if(parameterString.getType().isArray()) {
-                this.code.append(".array");
-                if(parameterString.getType().getName().equals("int[]"))
-                    this.code.append(".i32");
-                else if (parameterString.getType().getName().equals("boolean[]"))
-                    this.code.append(".bool");
-                else if (parameterString.getType().getName().equals("String[]"))
-                    this.code.append(".String");
-            }
-
-            if(parameterString.getType().getName().equals("int"))
-                this.code.append(".i32");
-            else if (parameterString.getType().getName().equals("boolean"))
-                this.code.append(".bool");
-            else if (parameterString.getType().getName().equals("String"))
-                this.code.append(".String");
+            var type = parameterString.getType();
+            if(type.isArray()) this.code.append(".array");
+            if(type.getName().equals("int[]") || type.getName().equals("int")) this.code.append(".i32");
+            if(type.getName().equals("boolean[]") || type.getName().equals("boolean")) this.code.append(".bool");
+            if(type.getName().equals(("String[]")) || type.getName().equals("String")) this.code.append(".String");
 
             var size = this.symbolTable.getParameters(methodString).size();
             if(size > 1 && parameterString != this.symbolTable.getParameters(methodString).get(size-1))
-                code.append(", ");
+                this.code.append(", ");
 
         }
 
     }
 
-    public List statementVisit(JmmNode jmmNode) {
+    public void statementVisit(JmmNode jmmNode, List<Symbol> localVariables) {
         if(jmmNode.getJmmChild(0).getKind().equals("AssignmentOp")) {
-            return assignmentVisit(jmmNode.getJmmChild(0));
+            assignmentVisit(jmmNode.getJmmChild(0), localVariables);
         }
         if(jmmNode.getJmmChild(0).getKind().equals("MethodInvocation")) {
-            return methodInvocationVisit(jmmNode.getJmmChild(0));
+            methodInvocationVisit(jmmNode.getJmmChild(0), localVariables);
         }
-        return new ArrayList<>();
     }
 
-    public List assignmentVisit(JmmNode jmmNode) {
-        List<String> assignment = new ArrayList<>();
-        assignment.add("Assignment");
-        assignment.add(jmmNode.getJmmChild(0).get("value"));
-        assignment.add(jmmNode.getJmmChild(1).get("value"));
-
-        return assignment;
-    }
-
-    public List methodInvocationVisit(JmmNode jmmNode) {
-        List<String> methodInvocation = new ArrayList<>();
-        methodInvocation.add("MethodInvocation");
-        methodInvocation.add(jmmNode.get("value"));
-        methodInvocation.add(jmmNode.getJmmChild(0).get("value"));
-        methodInvocation.add(jmmNode.getJmmChild(1).get("value"));
-
-        return methodInvocation;
-    }
-
-    public List operationVisit(JmmNode jmmNode, List<Symbol> localVariables) {
-
-        List<String> operation = new ArrayList<>();
-        var op = jmmNode.get("op");
-
-        var left = jmmNode.getJmmChild(0).get("value");
-        for(var localVar : localVariables) {
-            if(localVar.getName().equals(left)) {
-                if(localVar.getType().getName().equals("int"))
-                    operation.add(left + ".i32 ");
-            }
-        }
-        operation.add(op + ".i32 ");
+    public void assignmentVisit(JmmNode jmmNode, List<Symbol> localVariables) {
+        var dest = jmmNode.getJmmChild(0).get("value");
 
         if(jmmNode.getJmmChild(1).hasAttribute("value")) {
-            var right = jmmNode.getJmmChild(1).get("value");
-            for(var localVar : localVariables) {
-                if(localVar.getName().equals(right)) {
-                    if(localVar.getType().getName().equals("int"))
-                        operation.add(right + ".i32");
+            var value = jmmNode.getJmmChild(1).get("value");
+
+            for(var localVar: localVariables)
+                if(localVar.getName().equals(dest)) {
+                    if(localVar.getType().getName().equals("int")) this.code.append("\t\t" + dest + ".i32 :=.i32 " + value + ".i32;\n");
+                    if(localVar.getType().getName().equals("bool")) this.code.append("\t\t" + dest + ".bool :=.bool " + value + ".bool;\n");
                 }
-            }
-        } else {
-            operationVisit(jmmNode.getJmmChild(1), localVariables);
         }
 
-        return operation;
+        if(jmmNode.getJmmChild(1).getKind().equals("AdditiveOp")) {
+            StringBuilder returnType = new StringBuilder();
+            for(var localVar: localVariables)
+                if(localVar.getName().equals(dest))
+                    if(localVar.getType().getName().equals("int")) {
+                        returnType.append("int");
+                        var operation = operationVisit(jmmNode.getJmmChild(1), localVariables, 0, returnType.toString(), new StringBuilder());
+                        this.code.append("\t\t" + dest + ".i32 :=.i32 " + operation + ".i32;\n");
+                    }
+        }
+    }
+
+    public void methodInvocationVisit(JmmNode jmmNode, List<Symbol> localVariables) {
+        var method = jmmNode.get("value");
+        var dest = jmmNode.getJmmChild(0).get("value");
+        var variable = jmmNode.getJmmChild(1).get("value");
+
+        for(var localVar: localVariables) {
+            if(localVar.getName().equals(variable)) {
+                if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".i32).V;\n");
+                if(localVar.getType().getName().equals("bool")) this.code.append("\t\tinvokestatic(" +dest + ", \"" + method + "\", " + variable + ".bool).V;\n");
+            }
+        }
+    }
+
+    public String operationVisit(JmmNode jmmNode, List<Symbol> localVariables, int index, String type, StringBuilder tmp) {
+        var op = jmmNode.get("op");
+        index+=1;
+
+        //left is recursive
+        var left = jmmNode.getJmmChild(0);
+        if(left.hasAttribute("value")) {
+            for(var localVar : localVariables) {
+                if(localVar.getName().equals(left.get("value")))
+                    if(localVar.getType().getName().equals("int")) this.operationBuilder.append(left.get("value") + ".i32");
+            }
+            if(left.getKind().equals("Integer")) this.operationBuilder.append(left.get("value") + ".i32");
+        } else {
+            operationVisit(left, localVariables, index, type, tmp);
+            this.operationBuilder.append(tmp + ".i32");
+        }
+
+        this.operationBuilder.append(" " + op + ".i32 ");
+
+        //right
+        var right = jmmNode.getJmmChild(1);
+        if(right.hasAttribute("value")) {
+            for(var localVar : localVariables) {
+                if(localVar.getName().equals(right.get("value")))
+                    if (localVar.getType().getName().equals("int")) this.operationBuilder.append(right.get("value") + ".i32");
+            }
+            if(right.getKind().equals("Integer")) this.operationBuilder.append(right.get("value") + ".i32");
+        } else {
+            operationVisit(right, localVariables, index, type, tmp);
+            this.operationBuilder.append(tmp + ".i32");
+        }
+
+        if(type.equals("int")) this.code.append("\t\tt" + index + ".i32 :=.i32 " + this.operationBuilder.toString() + ";\n");
+
+        if(!tmp.isEmpty()) tmp.delete(0, tmp.length());
+
+        tmp.append("t" + index);
+
+        this.operationBuilder.delete(0, this.operationBuilder.length());
+
+        return tmp.toString();
     }
 
     public String getReturnVar(String returnType, List<Symbol> localVariables) {
@@ -273,15 +256,8 @@ public class Optimization implements JmmOptimization {
         }
         //System.out.println(method.getJmmChild(method.getNumChildren()-1));
         if(method.getJmmChild(method.getNumChildren()-1).getKind().equals("AdditiveOp")) {
-            var operation = operationVisit(method.getJmmChild(method.getNumChildren()-1), localVariables);
-            if(returnType.equals("int")) {
-                this.code.append("\t\tt0.i32 :=.i32 ");
-            }
-            for(var value : operation) {
-                this.code.append(value);
-            }
-            this.code.append(";\n");
-            returnVar.append("t0.i32");
+            var operation = operationVisit(method.getJmmChild(method.getNumChildren()-1), localVariables, 0, returnType, new StringBuilder());
+            returnVar.append(operation + ".i32");
         }
         return returnVar.toString();
     }
