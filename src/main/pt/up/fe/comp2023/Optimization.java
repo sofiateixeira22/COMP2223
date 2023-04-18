@@ -174,7 +174,7 @@ public class Optimization implements JmmOptimization {
                 }
         }
 
-        if(jmmNode.getJmmChild(1).getKind().equals("AdditiveOp")) {
+        if(jmmNode.getJmmChild(1).getKind().equals("AdditiveOp") || jmmNode.getJmmChild(1).getKind().equals("MultiplicativeOp")) {
             StringBuilder returnType = new StringBuilder();
             for(var localVar: localVariables)
                 if(localVar.getName().equals(dest))
