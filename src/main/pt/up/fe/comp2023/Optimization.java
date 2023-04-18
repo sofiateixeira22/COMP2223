@@ -88,15 +88,16 @@ public class Optimization implements JmmOptimization {
                     this.code.append(".bool");
                 else if (fieldString.getType().getName().equals("String[]"))
                     this.code.append(".String");
+            } else {
+                if(fieldString.getType().getName().equals("int"))
+                    this.code.append(".i32");
+                else if(fieldString.getType().getName().equals("boolean"))
+                    this.code.append(".bool");
+                else if(fieldString.getType().getName().equals("String"))
+                    this.code.append(".String");
+                else this.code.append(".V");
             }
 
-            if(fieldString.getType().getName().equals("int"))
-                this.code.append(".i32");
-            else if(fieldString.getType().getName().equals("boolean"))
-                this.code.append(".bool");
-            else if(fieldString.getType().getName().equals("String"))
-                this.code.append(".String");
-            else this.code.append(".V");
 
             this.code.append(";\n");
         }
