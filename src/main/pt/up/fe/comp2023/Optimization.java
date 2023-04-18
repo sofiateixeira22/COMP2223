@@ -108,7 +108,8 @@ public class Optimization implements JmmOptimization {
 
             if(returnType.equals("int")) this.code.append(".i32 ");
             else if (returnType.equals("boolean")) this.code.append(".bool ");
-            else this.code.append(".V ");
+            else if(returnType.equals("void")) this.code.append(".V ");
+            else this.code.append("." + returnType + " ");
 
             this.code.append("{\n");
 
