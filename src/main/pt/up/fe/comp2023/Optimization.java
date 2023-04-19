@@ -206,46 +206,41 @@ public class Optimization implements JmmOptimization {
     public void methodInvocationVisit(JmmNode jmmNode, List<Symbol> localVariables) {
         var method = jmmNode.get("value");
         var dest = jmmNode.getJmmChild(0).get("value");
-        System.out.println(jmmNode.getNumChildren());
+
         if(jmmNode.getNumChildren() > 1 ) {
-            System.out.println("hello");
-            System.out.println(method);
             var variable = jmmNode.getJmmChild(1).get("value");
-            System.out.println(variable);
+
             var isVar = false;
             String localVariableType = "";
+
             for(var localVar: localVariables) {
                 if(localVar.getName().equals(dest)) isVar=true;
                 if(localVar.getName().equals(variable)) {
                     localVariableType = localVar.getType().getName();
-//                    if(method.equals("println") || dest.equals("io")) {
-//                            if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".i32).V;\n");
-//                            if(localVar.getType().getName().equals("boolean")) this.code.append("\t\tinvokestatic(" +dest + ", \"" + method + "\", " + variable + ".bool).V;\n");
-//                    } else {
-//                        System.out.println("here");
-//                        if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokevirtual(" + dest + ".i32, \"" + method + "\", " + variable + ".i32).V;\n");
-//                        if(localVar.getType().getName().equals("boolean")) this.code.append("\t\tinvokevirtual(" + dest + ".bool, \"" + method + "\", " + variable + ".bool).V;\n");
-                    //}
                 }
             }
             if(!isVar && this.imports.contains(dest)) {
                 if(localVariableType.equals("int")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".i32).V;\n");
                 else if(localVariableType.equals("boolean")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".bool).V;\n");
                 else this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + "." + localVariableType + ").V;\n");
+            } else if(!localVariableType.equals("")) {
+                if(jmmNode.getNumChildren() == 2) {
+                    if(localVariableType.equals("int")) this.code.append("\t\tinvokevirtual(" + dest + ".i32, \"" + method + "\", " + variable + ".i32).V;\n");
+                    else if(localVariableType.equals("boolean")) this.code.append("\t\tinvokevirtual(" + dest + ".bool, \"" + method + "\", " + variable + ".bool).V;\n");
+                    else this.code.append("\t\tinvokevirtual(" + dest + "." + localVariableType + ", \"" + method + "\", " + variable + "." + localVariableType + ").V;\n");
+                }
             }
         }
-//        if(jmmNode.getNumChildren() == 1) {
-//            for(var localVar: localVariables) {
-//                if(localVar.getName().equals(dest)) {
-//                    if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokevirtual(" + dest + ".i32, \"" + method + "\").V;\n");
-//                    if(localVar.getType().getName().equals("boolean")) this.code.append("\t\tinvokevirtual(" + dest + ".bool, \"" + method + "\").V;\n");
-//                    else {
-//                        var type = localVar.getType().getName();
-//                        this.code.append("\t\tinvokevirtual(" + dest + "." + type + ", \"" + method + "\").V;\n");
-//                    }
-//                }
-//            }
-//        }
+        if(jmmNode.getNumChildren() == 1) {
+            for(var localVar: localVariables) {
+                if(localVar.getName().equals(dest)) {
+                    if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokevirtual(" + dest + ".i32, \"" + method + "\").V;\n");
+                    else if(localVar.getType().getName().equals("boolean")) this.code.append("\t\tinvokevirtual(" + dest + ".bool, \"" + method + "\").V;\n");
+                    else this.code.append("\t\tinvokevirtual(" + dest + "." + localVar.getType().getName() + ", \"" + method + "\").V;\n");
+
+                }
+            }
+        }
 
     }
 
