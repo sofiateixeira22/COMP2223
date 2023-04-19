@@ -10,7 +10,7 @@ public class SemanticAnalysisTest {
     public void symbolTable() {
 
         var result = TestUtils.analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/SymbolTable.jmm"));
-        System.out.println("Symbol Table:\n" + result.getSymbolTable().print());
+        System.out.println(result.getSymbolTable().getLocalVariables("method1"));
     }
 
     @Test

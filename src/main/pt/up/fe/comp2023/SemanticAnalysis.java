@@ -2,6 +2,7 @@ package pt.up.fe.comp2023;
 
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
@@ -14,17 +15,18 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     List<Report> reports = new ArrayList<>();
 
-    public boolean checkAssignment(String typeA, String typeB){
-        if (!typeB.equals(typeA)){
-            Report report = new Report(ReportType.ERROR ,Stage.SEMANTIC, -1, "Object of type " + typeB + " cannot be assigned to object of type " + typeA);
-            this.reports.add(report);
-            return false;
-        }
-        return true;
-    }
 
-    public boolean checkOperation(JmmNode jmmNode){
-        return true;
+    public void traverseTree(JmmNode jmmNode){
+
+        if (Objects.equals(jmmNode.toString(), "AssignmentOp")){
+
+        }
+        else {
+            for (JmmNode child : jmmNode.getChildren()){
+                traverseTree(child);
+            }
+        }
+
     }
 
     @Override
@@ -32,7 +34,11 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         var table = new SymbolTable(jmmParserResult);
 
+        //System.out.println(jmmParserResult.getRootNode().toTree());
 
+        //System.out.println(table.print());
+
+        traverseTree(jmmParserResult.getRootNode());
 
         return new JmmSemanticsResult(jmmParserResult, table, new ArrayList<>());
     }

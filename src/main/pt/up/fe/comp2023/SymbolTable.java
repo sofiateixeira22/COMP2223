@@ -21,10 +21,8 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     List<Symbol> fields;
     List<String> methods;
     Map<String, Type> methodTypes;
-
     Map<String, List<Symbol>> methodParameters;
-    List<Symbol> parameters;
-    List<Symbol> localVariables;
+    Map<String, List<Symbol>> localVariables;
 
     public SymbolTable(JmmParserResult jmmParserResult){
 
@@ -40,6 +38,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         this.methodParameters = visitor.getMethodParameters();
         this.localVariables = visitor.getLocalVariables();
 
+        System.out.println(this.localVariables);
 
     }
 
@@ -80,6 +79,6 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public List<Symbol> getLocalVariables(String s) {
-        return this.localVariables;
+        return this.localVariables.get(s);
     }
 }
