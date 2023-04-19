@@ -30,7 +30,7 @@ varDeclaration
 
 
 methodDeclaration
-    : 'public'? type identifier '(' (type identifier ( ',' type identifier)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}'
+    : 'public'? type identifier '(' (type identifier ( ',' type identifier)* )? ')' '{' (varDeclaration)* (statement)* expression ';' '}'
     | 'public'? 'static' type identifier '(' type '[' ']' identifier ')' '{' (varDeclaration)* (statement)* '}'
     ;
 
@@ -65,7 +65,7 @@ expression
     | expression ('++' | '--') #UnaryPostOp
     | ('!' | '++' | '--') expression #UnaryPreOp
     | 'new' type '[' expression ']' #ArrayNew
-    | 'new' ID '('')' #ClassNew
+    | 'new' value=ID '('')' #ClassNew
     | expression op=('*' | '/' | '%') expression #MultiplicativeOp
     | expression op=('+' | '-') expression #AdditiveOp
     | expression op=('<' | '>' | '<=' | '>=') expression #RelationalOp
@@ -74,8 +74,9 @@ expression
     | expression '||' expression #LogicalOp
     | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=') expression #AssignmentOp
     | value=INTEGER #Integer
-    | 'true' #Boolean
-    | 'false' #Boolean
+    | value='true' #Boolean
+    | value='false' #Boolean
+    | 'return' expression #ReturnStatement
     | value=ID #IdentifierExpr
     | 'this' #ThisExpr
     ;
