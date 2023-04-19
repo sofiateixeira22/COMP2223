@@ -22,6 +22,14 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     int counter = 0;
 
+    public boolean isInImports(String className){
+        System.out.println(table.getImports());
+        if (table.getImports().contains(className)){
+            return true;
+        }
+        return false;
+    }
+
     public boolean checkSymbolExists(List<Symbol> symbolList, String symbolName){
         if (symbolList == null){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
@@ -95,10 +103,15 @@ public class SemanticAnalysis implements JmmAnalysis {
     public String checkNewClass(String varType, JmmNode jmmNode){
         String classType = jmmNode.get("value");
 
-        if (!Objects.equals(varType, classType)){
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Cannot assign variable of type " + classType + " to variable of type: "  + varType));
-            this.counter+=1;
+        System.out.println("CLASS TYPE: " + classType);
+
+        if (!isInImports(classType)) {
+
+            if (!Objects.equals(varType, classType)) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                        "Cannot assign variable of type " + classType + " to variable of type: " + varType));
+                this.counter += 1;
+            }
         }
 
         return classType;
@@ -108,30 +121,39 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         String var1 = jmmNode.getChildren().get(0).get("value");
 
-        if (checkSymbolExists(currentMethodVariables, var1)){
-            JmmNode child2 = jmmNode.getChildren().get(1);
-            Type type1 = getSymbolType(var1);
-            String type1Name = type1.getName();
-            String child2Type = "";
-            if (child2.toString() != "ArrayNew"){
-                checkNewArray(child2);
-            }
-            if (child2.toString().contains("IdentifierExpr")){
-                checkSymbolExists(currentMethodVariables, child2.get("value"));
-            }
-            if (child2.toString().contains("Integer")){
-                child2Type = "int";
-            }
-            if (child2.toString().contains("Boolean")){
-                child2Type = "boolean";
-            }
-            if (child2.toString().contains("ClassNew")){
-                child2Type = checkNewClass(type1Name, child2);
-            }
+        System.out.println("VALUE 1: " + var1);
 
-            if (!Objects.equals(child2Type, type1Name)){
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                        "Cannot assign variable of type " + child2Type + " to variable of type: "  + type1Name));
+        if (!isInImports(getSymbolType(var1).getName())) {
+
+            if (checkSymbolExists(currentMethodVariables, var1)) {
+                JmmNode child2 = jmmNode.getChildren().get(1);
+                Type type1 = getSymbolType(var1);
+                String type1Name = type1.getName();
+                String child2Type = "";
+                if (child2.toString() != "ArrayNew") {
+                    checkNewArray(child2);
+                }
+                if (child2.toString().contains("IdentifierExpr")) {
+                    checkSymbolExists(currentMethodVariables, child2.get("value"));
+                }
+                if (child2.toString().contains("Integer")) {
+                    child2Type = "int";
+                }
+                if (child2.toString().contains("Boolean")) {
+                    child2Type = "boolean";
+                }
+                if (child2.toString().contains("ClassNew")) {
+                    child2Type = checkNewClass(type1Name, child2);
+                }
+
+                if (!isInImports(child2Type)){
+
+                    System.out.println("Child 2 TYPE: " + child2Type);
+                    if (!Objects.equals(child2Type, type1Name)) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                                "Cannot assign variable of type " + child2Type + " to variable of type: " + type1Name));
+                    }
+                }
             }
         }
 
@@ -160,11 +182,9 @@ public class SemanticAnalysis implements JmmAnalysis {
             this.currentMethodVariables = this.table.getLocalVariables(jmmNode.getChildren().get(1).get("value"));
         }
         if (jmmNode.toString().contains("MultiplicativeOp")){
-            System.out.println("****************************");
             checkMathOperation(jmmNode, "multiplicative");
         }
         if (jmmNode.toString().contains("AdditiveOp")){
-            System.out.println("++++++++++++++++++++++++++++++++++");
             checkMathOperation(jmmNode, "additive");
         }
         if (jmmNode.toString().contains("AssignmentOp")){
