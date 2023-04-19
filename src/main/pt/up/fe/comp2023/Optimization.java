@@ -201,14 +201,25 @@ public class Optimization implements JmmOptimization {
     public void methodInvocationVisit(JmmNode jmmNode, List<Symbol> localVariables) {
         var method = jmmNode.get("value");
         var dest = jmmNode.getJmmChild(0).get("value");
-        var variable = jmmNode.getJmmChild(1).get("value");
+        System.out.println(jmmNode.getNumChildren());
+        if(jmmNode.getNumChildren() > 1 ) {
+            var variable = jmmNode.getJmmChild(1).get("value");
 
-        for(var localVar: localVariables) {
-            if(localVar.getName().equals(variable)) {
-                if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".i32).V;\n");
-                if(localVar.getType().getName().equals("bool")) this.code.append("\t\tinvokestatic(" +dest + ", \"" + method + "\", " + variable + ".bool).V;\n");
+            for(var localVar: localVariables) {
+                if(localVar.getName().equals(variable)) {
+                    if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".i32).V;\n");
+                    if(localVar.getType().getName().equals("bool")) this.code.append("\t\tinvokestatic(" +dest + ", \"" + method + "\", " + variable + ".bool).V;\n");
+                }
             }
         }
+        if(jmmNode.getNumChildren() == 1) {
+            for(var localVar: localVariables) {
+                if(localVar.getName().equals(dest)) {
+                    if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokevirtual(" + dest + ".i32, \"" + method + "\").V;\n");
+                }
+            }
+        }
+
     }
 
     public String operationVisit(JmmNode jmmNode, List<Symbol> localVariables, int index, String type, StringBuilder tmp) {
