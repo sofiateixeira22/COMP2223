@@ -230,7 +230,8 @@ public class Optimization implements JmmOptimization {
             }
             if(!isVar && this.imports.contains(dest)) {
                 if(localVariableType.equals("int")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".i32).V;\n");
-                if(localVariableType.equals("boolean")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".bool).V;\n");
+                else if(localVariableType.equals("boolean")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".bool).V;\n");
+                else this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + "." + localVariableType + ").V;\n");
             }
         }
 //        if(jmmNode.getNumChildren() == 1) {
