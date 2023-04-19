@@ -50,18 +50,22 @@ identifier
 
 statement
     : '{'(statement)*'}'
-    | 'if' '(' expression ')' statement 'else' statement
+    | 'if' '(' condition ')' statement 'else' statement
     | 'while' '(' expression ')' statement
     | expression ';'
     | identifier '=' expression ';'
     | identifier '[' expression ']' '=' expression ';'
     ;
 
+condition
+    : expression
+    ;
+
 expression
     : '(' expression ')' #Parentheses
     | expression '[' expression ']' #BinaryOp
     | expression '.' 'length' #Length
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #TernaryOp
+    | expression '.' functionName '(' ( functionParam ( ',' functionParam )* )? ')' #MethodCall
     | expression ('++' | '--') #UnaryPostOp
     | ('!' | '++' | '--') expression #UnaryPreOp
     | 'new' type '[' expression ']' #ArrayNew
@@ -80,4 +84,13 @@ expression
     | value=ID #IdentifierExpr
     | 'this' #ThisExpr
     ;
+
+functionName
+    :value=ID
+    ;
+
+functionParam
+    :value=ID
+    ;
+
 

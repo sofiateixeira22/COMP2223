@@ -170,6 +170,32 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
     }
 
+    public void checkMethodCall(JmmNode jmmNode){
+        String funcCaller = jmmNode.getChildren().get(0).get("value");
+        String funcName = jmmNode.getChildren().get(1).get("value");
+        System.out.println("SUPER: " + this.table.getSuper());
+        if ((this.table.getSuper() != null && (!isInImports(getSymbolType(funcCaller).getName()) && !isInImports(this.table.getSuper()))) || !isInImports(getSymbolType(funcCaller).getName())){
+
+            if (!isInImports(getSymbolType(funcCaller).getName()) && !isInImports(this.table.getSuper())) {
+
+                if (!this.table.getMethods().contains(funcName)) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                            "Call to method: " + funcName + " cannot be completed because it does not exist."));
+                    this.counter += 1;
+                }
+            }
+        }
+    }
+
+    public void checkCondition(JmmNode jmmNode){
+        String childType = jmmNode.getChildren().toString();
+        if (!childType.contains("Boolean") && !childType.contains("LogicalOp")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Invalid Condition"));
+            this.counter += 1;
+        }
+    }
+
     public void checkReturn(JmmNode jmmNode){
         for (JmmNode child : jmmNode.getChildren()){
             traverseTree(child);
@@ -195,6 +221,12 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
         if (jmmNode.toString().contains("BinaryOp")){
             checkArrayAccess(jmmNode);
+        }
+        if (jmmNode.toString().contains("MethodCall")){
+            checkMethodCall(jmmNode);
+        }
+        if (jmmNode.toString().contains("Condition")){
+            checkCondition(jmmNode);
         }
         if (jmmNode.toString().contains("ReturnStatement")){
             checkReturn(jmmNode);
