@@ -197,7 +197,11 @@ public class SemanticAnalysis implements JmmAnalysis {
         Pair<Boolean, Type> checkMethodCaller = checkVariableExists(methodCaller);
         Pair<Boolean, Type> checkMethodCall = checkMethodExists(methodCalled);
 
-
+        if (checkMethodCaller.a == false){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Method Caller: " + methodCaller + " does not exist."));
+            return new Pair<>(false, null);
+        }
 
         if (isInImports(checkMethodCaller.b.getName()) || isInImports(this.table.getSuper())){
             return new Pair<>(true, null);
