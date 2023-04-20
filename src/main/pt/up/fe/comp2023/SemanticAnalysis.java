@@ -170,9 +170,9 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         checkedVar2 = traverseTree(jmmNode.getJmmChild(1));
 
-        if (checkedVar2.a && checkedVar.a && checkedVar.b.isArray()){
+        if (checkedVar2.a && checkedVar.a){
 
-            if (checkedVar2.b.getName() == "int"){
+            if (Objects.equals(checkedVar2.b.getName(), "int")){
                 validAccess = true;
             }
             if (!validAccess){
@@ -194,7 +194,7 @@ public class SemanticAnalysis implements JmmAnalysis {
         Pair<Boolean, Type> checkMethodCaller = checkVariableExists(methodCaller);
         Pair<Boolean, Type> checkMethodCall = checkMethodExists(methodCalled);
 
-        if (checkMethodCaller.a == false){
+        if (!checkMethodCaller.a){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                     "Method Caller: " + methodCaller + " does not exist."));
             return new Pair<>(false, null);
@@ -217,29 +217,28 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         boolean validMethodCall = true;
 
-        if (checkMethodCall.a) {
 
-            for (JmmNode child : jmmNode.getChildren()) {
-                if (child.getIndexOfSelf() != 0 && child.toString().contains("IdentifierExpr")) {
-                    Pair<Boolean, Type> checkParam = checkVariableExists(child.get("value"));
-                    if (this.table.getParameters(methodCalled).get(child.getIndexOfSelf()).getName().equals(checkParam.b.getName())) {
-                        continue;
-                    } else {
-                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                                "Invalid parameter " + checkParam.b.getName() + " in function call."));
-                        validMethodCall = false;
-                    }
+        for (JmmNode child : jmmNode.getChildren()) {
+            if (child.getIndexOfSelf() != 0 && child.toString().contains("IdentifierExpr")) {
+                Pair<Boolean, Type> checkParam = checkVariableExists(child.get("value"));
+                if (this.table.getParameters(methodCalled).get(child.getIndexOfSelf()).getName().equals(checkParam.b.getName())) {
+                    continue;
+                } else {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                            "Invalid parameter " + checkParam.b.getName() + " in function call."));
+                    validMethodCall = false;
                 }
-                if (child.getIndexOfSelf() == jmmNode.getNumChildren()-1){
-                    Pair<Boolean, Type> checkReturn = traverseTree(child);
+            }
+            if (child.getIndexOfSelf() == jmmNode.getNumChildren()-1){
+                Pair<Boolean, Type> checkReturn = traverseTree(child);
 
-                    if (!checkReturn.b.getName().equals(checkMethodCall.b.getName())){
-                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                                "Return type " + checkReturn.b.getName() +" is not compatible with: " + checkMethodCall.b.getName()));
-                    }
+                if (!checkReturn.b.getName().equals(checkMethodCall.b.getName())){
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                            "Return type " + checkReturn.b.getName() +" is not compatible with: " + checkMethodCall.b.getName()));
                 }
             }
         }
+
 
         if (!validMethodCall){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
