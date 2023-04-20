@@ -254,7 +254,7 @@ public class SemanticAnalysis implements JmmAnalysis {
             checkMethodCall(jmmNode);
         }
         if (jmmNode.toString().contains("LogicalOp")){
-            checkMethodCall(jmmNode);
+            checkLogicalOperation(jmmNode);
         }
         if (jmmNode.toString().contains("Condition")){
             checkCondition(jmmNode);
