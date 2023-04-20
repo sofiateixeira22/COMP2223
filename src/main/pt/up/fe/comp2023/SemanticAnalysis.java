@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023;
 
+import org.antlr.v4.runtime.misc.Pair;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
@@ -30,22 +31,40 @@ public class SemanticAnalysis implements JmmAnalysis {
         return false;
     }
 
-    public boolean checkSymbolExists(List<Symbol> symbolList, String symbolName){
-        if (symbolList == null){
+    public Pair<Boolean, Type> checkVariableExists(String varName){
+
+        if (this.currentMethodVariables == null){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Variable " + symbolName + " has no previous declaration"));
-            this.counter+=1;
-            return false;
+                    "Variable with the name: " + varName + " has no previous assignment."));
+
+            return new Pair<>(false, null);
         }
-        for (Symbol symbol : symbolList){
-            if (symbol.getName().equals(symbolName)){
-                return true;
+
+        for (Symbol variable : this.currentMethodVariables){
+            if (variable.getName().equals(varName)){
+                return new Pair<>(true, variable.getType());
             }
         }
+
+        for (Symbol variable : this.table.getFields()){
+            if (variable.getName().equals(varName)){
+                return new Pair<>(true, variable.getType());
+            }
+        }
+
         reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                "Variable " + symbolName + " has no previous declaration"));
-        this.counter+=1;
-        return false;
+                "Variable with the name: " + varName + " has no previous assignment."));
+
+        return new Pair<>(false, null);
+    }
+
+    public Pair<Boolean, Type> checkMethodExists(String methodName){
+        for (String method : this.table.getMethods()) {
+            if (method.equals(methodName)){
+                return new Pair<>(true, this.table.getReturnType(methodName));
+            }
+        }
+        return new Pair<>(false, null);
     }
 
     public Type getSymbolType(String symbolName){
@@ -96,78 +115,76 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     }
 
-    public void checkNewArray(JmmNode jmmNode){
+   public Pair<Boolean, Type> checkClassNew(JmmNode jmmNode){
 
-    }
+        return new Pair<>(false, null);
+   }
 
-    public String checkNewClass(String varType, JmmNode jmmNode){
-        String classType = jmmNode.get("value");
+    public Pair<Boolean, Type> checkArrayNew(JmmNode jmmNode){
 
-        System.out.println("CLASS TYPE: " + classType);
-
-        if (!isInImports(classType)) {
-
-            if (!Objects.equals(varType, classType)) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                        "Cannot assign variable of type " + classType + " to variable of type: " + varType));
-                this.counter += 1;
-            }
-        }
-
-        return classType;
+        return new Pair<>(false, null);
     }
 
     public void checkAssignment(JmmNode jmmNode){
 
-        String var1 = jmmNode.getChildren().get(0).get("value");
+        JmmNode assignment1 = jmmNode.getChildren().get(0);
+        JmmNode assignment2 = jmmNode.getChildren().get(1);
 
-        System.out.println("VALUE 1: " + var1);
+        Pair<Boolean, Type> checkedVar = checkVariableExists(assignment1.get("value"));
+        Pair<Boolean, Type> checkedVar2;
 
-        if (!isInImports(getSymbolType(var1).getName())) {
+        boolean validAssignment = false;
 
-            if (checkSymbolExists(currentMethodVariables, var1)) {
-                JmmNode child2 = jmmNode.getChildren().get(1);
-                Type type1 = getSymbolType(var1);
-                String type1Name = type1.getName();
-                String child2Type = "";
-                if (child2.toString() != "ArrayNew") {
-                    checkNewArray(child2);
-                }
-                if (child2.toString().contains("IdentifierExpr")) {
-                    checkSymbolExists(currentMethodVariables, child2.get("value"));
-                }
-                if (child2.toString().contains("Integer")) {
-                    child2Type = "int";
-                }
-                if (child2.toString().contains("Boolean")) {
-                    child2Type = "boolean";
-                }
-                if (child2.toString().contains("ClassNew")) {
-                    child2Type = checkNewClass(type1Name, child2);
-                }
+        checkedVar2 = traverseTree(assignment2);
 
-                if (!isInImports(child2Type)){
+        if (checkedVar2.a && checkedVar.a) {
 
-                    System.out.println("Child 2 TYPE: " + child2Type);
-                    if (!Objects.equals(child2Type, type1Name)) {
-                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                                "Cannot assign variable of type " + child2Type + " to variable of type: " + type1Name));
-                    }
-                }
+            if (checkedVar2.b == checkedVar.b) {
+                validAssignment = true;
+            }
+            if (isInImports(checkedVar2.b.getName()) && isInImports(checkedVar.b.getName())){
+                validAssignment = true;
+            }
+            if (checkedVar2.b.getName().equals(this.table.getSuper()) || checkedVar.b.getName().equals(this.table.getSuper())) {
+
+                validAssignment = true;
+            }
+            if (!validAssignment){
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                        "Cannot assign variable of type " + checkedVar2.b.getName() + " to variable of type: " + checkedVar.b.getName()));
+
             }
         }
-
     }
 
     public void checkArrayAccess(JmmNode jmmNode){
-        String arrayID = jmmNode.getChildren().get(0).get("value");
-        Type arrayType = getSymbolType(arrayID);
+        String arrayName = jmmNode.getJmmChild(0).get("value");
 
-        if (!arrayType.isArray()) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Cannot access index of a non-array"));
-            this.counter+=1;
+        Pair<Boolean, Type> checkedVar = checkVariableExists(arrayName);
+        Pair<Boolean, Type> checkedVar2;
+
+        boolean validAccess = false;
+
+        checkedVar2 = traverseTree(jmmNode.getJmmChild(1));
+
+        if (checkedVar2.a && checkedVar.a && checkedVar.b.isArray()){
+
+            if (checkedVar2.b == checkedVar.b){
+                validAccess = true;
+            }
+            if (isInImports(checkedVar2.b.getName()) || isInImports(checkedVar.b.getName())) {
+                validAccess = true;
+            }
+            if (!validAccess){
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                        "Cannot assign variable of type " + checkedVar2.b.getName() + " to variable of type: " + checkedVar.b.getName()));
+
+            }
         }
+
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                "Cannot assign variable of type " + checkedVar2.b.getName() + " to variable of type: " + checkedVar.b.getName()));
+
     }
 
     public void checkMethodCall(JmmNode jmmNode){
@@ -202,7 +219,7 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
     }
 
-    public void traverseTree(JmmNode jmmNode){
+    public Pair<Boolean, Type> traverseTree(JmmNode jmmNode){
 
         if (jmmNode.toString().contains("MethodDeclaration")){
             this.currentMethodVariables = this.table.getLocalVariables(jmmNode.getChildren().get(1).get("value"));
@@ -216,8 +233,14 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (jmmNode.toString().contains("AssignmentOp")){
             checkAssignment(jmmNode);
         }
+        if (jmmNode.toString().contains("ArrayNew")){
+            return checkArrayNew(jmmNode);
+        }
+        if (jmmNode.toString().contains("ClassNew")){
+            return checkClassNew(jmmNode);
+        }
         if (jmmNode.toString().contains("IdentifierExpr")){
-            checkSymbolExists(this.currentMethodVariables, jmmNode.get("value"));
+            return checkVariableExists(jmmNode.get("value"));
         }
         if (jmmNode.toString().contains("BinaryOp")){
             checkArrayAccess(jmmNode);
@@ -228,6 +251,9 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (jmmNode.toString().contains("Condition")){
             checkCondition(jmmNode);
         }
+        if (jmmNode.toString().contains("Integer")){
+            return new Pair<>(true, new Type("int", false));
+        }
         if (jmmNode.toString().contains("ReturnStatement")){
             checkReturn(jmmNode);
         }
@@ -237,6 +263,7 @@ public class SemanticAnalysis implements JmmAnalysis {
             }
         }
 
+        return new Pair<>(false, null);
     }
 
     @Override
