@@ -23,7 +23,6 @@ public class Optimization implements JmmOptimization {
         this.code = new StringBuilder();
         this.jmmSemanticsResult = jmmSemanticsResult;
         this.symbolTable = jmmSemanticsResult.getSymbolTable();
-        System.out.println(this.symbolTable.print());
 
         importVisit();
         classDeclarationVisit();
@@ -130,6 +129,7 @@ public class Optimization implements JmmOptimization {
             this.code.append("{\n");
 
             var localVariables = this.symbolTable.getLocalVariables(methodString);
+            System.out.println("hello: " + localVariables);
 
             var method = this.jmmSemanticsResult.getRootNode().getJmmChild(this.indexFirstLevel-1).getJmmChild(this.indexSecondLevel-1);
 
@@ -145,7 +145,7 @@ public class Optimization implements JmmOptimization {
                 if(returnType.equals("boolean")) this.code.append("\n\t\tret.bool " + returnValue + ";\n");
             }
 
-            this.code.append("\t}\n\n");
+        this.code.append("\t}\n\n");
         }
     }
 
@@ -158,8 +158,9 @@ public class Optimization implements JmmOptimization {
             var type = parameterString.getType();
             if(type.isArray()) this.code.append(".array");
             if(type.getName().equals("int[]") || type.getName().equals("int")) this.code.append(".i32");
-            if(type.getName().equals("boolean[]") || type.getName().equals("boolean")) this.code.append(".bool");
-            if(type.getName().equals(("String[]")) || type.getName().equals("String")) this.code.append(".String");
+            else if(type.getName().equals("boolean[]") || type.getName().equals("boolean")) this.code.append(".bool");
+            else if(type.getName().equals(("String[]")) || type.getName().equals("String")) this.code.append(".String");
+            else this.code.append("." + type.getName());
 
             var size = this.symbolTable.getParameters(methodString).size();
             if(size > 1 && parameterString != this.symbolTable.getParameters(methodString).get(size-1))
@@ -173,8 +174,8 @@ public class Optimization implements JmmOptimization {
         if(jmmNode.getJmmChild(0).getKind().equals("AssignmentOp")) {
             assignmentVisit(jmmNode.getJmmChild(0), localVariables);
         }
-        if(jmmNode.getJmmChild(0).getKind().equals("MethodInvocation")) {
-            methodInvocationVisit(jmmNode.getJmmChild(0), localVariables);
+        if(jmmNode.getJmmChild(0).getKind().equals("MethodCall")) {
+            methodCallVisit(jmmNode.getJmmChild(0), localVariables);
         }
     }
 
@@ -203,79 +204,57 @@ public class Optimization implements JmmOptimization {
         }
     }
 
-    public void methodInvocationVisit(JmmNode jmmNode, List<Symbol> localVariables) {
-        var method = jmmNode.get("value");
+    public String getType(List<Symbol> localVariables, String var) {
+        String type = "";
+        for(var localVar : localVariables) {
+            if(localVar.getName().equals(var)) type = localVar.getType().getName();
+        }
+        return type;
+    }
+
+    public void methodCallVisit(JmmNode jmmNode, List<Symbol> localVariables) {
+        var method = jmmNode.getJmmChild(1).get("value");
         var dest = jmmNode.getJmmChild(0).get("value");
         System.out.println("method: " + method);
         System.out.println("dest: " + dest);
+        System.out.println(jmmNode.getChildren());
 
-        if(jmmNode.getNumChildren() > 1 ) {
-            System.out.println("inside if numchild > 1");
-            var variable = jmmNode.getJmmChild(1).get("value");
-            System.out.println("variable: " + variable);
-
-            var isVar = false;
-            String localVariableType = "";
-
-            for(var localVar: localVariables) {
-                System.out.println("inside for");
-                if(localVar.getName().equals(dest)) isVar=true;
-                System.out.println("isVar: " + isVar);
-                if(localVar.getName().equals(variable)) {
-                    System.out.println("inside if local equals variable");
-                    localVariableType = localVar.getType().getName();
-                    if(!isVar && this.imports.contains(dest)) {
-                        if(localVariableType.equals("int")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".i32).V;\n");
-                        else if(localVariableType.equals("boolean")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".bool).V;\n");
-                        else this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + "." + localVariableType + ").V;\n");
-                    } else if(!localVariableType.equals("")) {
-                        if(jmmNode.getNumChildren() == 2) {
-                            if(localVariableType.equals("int")) this.code.append("\t\tinvokevirtual(" + dest + ".i32, \"" + method + "\", " + variable + ".i32).V;\n");
-                            else if(localVariableType.equals("boolean")) this.code.append("\t\tinvokevirtual(" + dest + ".bool, \"" + method + "\", " + variable + ".bool).V;\n");
-                            else this.code.append("\t\tinvokevirtual(" + dest + "." + localVariableType + ", \"" + method + "\", " + variable + "." + localVariableType + ").V;\n");
-                        } else {
-                            if(localVariableType.equals("int")) this.code.append("\t\tinvokestatic(" + dest + ".i32, \"" + method + "\", ");
-                            else if(localVariableType.equals("boolean")) this.code.append("\t\tinvokestatic(" + dest + ".bool, \"" + method + "\", ");
-                            else this.code.append("\t\tinvokestatic(" + dest + "." + localVariableType + ", \"" + method + "\", ");
-                            for(int i = 1; i < jmmNode.getNumChildren()-1; i++) {
-                                if(localVariableType.equals("int")) this.code.append(jmmNode.getJmmChild(i).get("value") + ".i32, ");
-                                else if(localVariableType.equals("boolean")) this.code.append(jmmNode.getJmmChild(i).get("value") + ".bool, ");
-                                else this.code.append(jmmNode.getJmmChild(i).get("value") + "." + localVariableType + ", ");
-                            }
-                            if(localVariableType.equals("int")) this.code.append(jmmNode.getJmmChild(jmmNode.getNumChildren()-1).get("value") + ".i32).V;\n");
-                            else if(localVariableType.equals("boolean")) this.code.append(jmmNode.getJmmChild(jmmNode.getNumChildren()-1).get("value") + ".bool).V;\n");
-                            else this.code.append(jmmNode.getJmmChild(jmmNode.getNumChildren()-1).get("value") + "." + localVariableType + ").V;\n");
-                        }
-                    }
-                } else {
-                    System.out.println("inside else local equals variable");
-                    localVariableType = jmmNode.getJmmChild(1).getKind();
-                    if(!isVar && this.imports.contains(dest)) {
-                        if(localVariableType.equals("Integer")) this.code.append("\t\tinvokestatic(" + dest + ", \"" + method + "\", " + variable + ".i32).V;\n");
-                    } else if(!localVariableType.equals("")) {
-                        if(jmmNode.getNumChildren() == 2) {
-                            if(localVariableType.equals("Integer")) this.code.append("\t\tinvokevirtual(" + dest + ".i32, \"" + method + "\", " + variable + ".i32).V;\n");
-                        } else {
-                            if(localVariableType.equals("Integer")) this.code.append("\t\tinvokestatic(" + dest + ".i32, \"" + method + "\", ");
-                            for(int i = 1; i < jmmNode.getNumChildren()-1; i++) {
-                                if(localVariableType.equals("Integer")) this.code.append(jmmNode.getJmmChild(i).get("value") + ".i32, ");
-                            }
-                            if(localVariableType.equals("Integer")) this.code.append(jmmNode.getJmmChild(jmmNode.getNumChildren()-1).get("value") + ".i32).V;\n");
-                        }
-                    }
+        Boolean isVar = false;
+        for(var localVar: localVariables) {
+            if(localVar.getName().equals(dest)) isVar=true;
+        }
+        if(!isVar && this.imports.contains(dest)) {
+            //não é var e está nos imports -> invoke static
+            this.code.append("\t\tinvokestatic(" + dest);
+        } else {
+            //é var -> invoke virtual
+            this.code.append("\t\tinvokevirtual(" + dest);
+            var type = getType(localVariables, dest);
+            if(type.equals("int")) this.code.append(".i32");
+            else if(type.equals("boolean")) this.code.append(".bool");
+            else this.code.append("." + type);
+        }
+        if(jmmNode.getNumChildren() > 2) {
+            this.code.append(", \"" + method + "\", ");
+            if(jmmNode.getNumChildren() > 3) {
+                for(int i = 2; i < jmmNode.getNumChildren()-1; i++) {
+                    this.code.append(jmmNode.getJmmChild(i).get("value") + ".");
+                    var type = getType(localVariables, jmmNode.getJmmChild(i).get("value"));
+                    if(type.equals("int")) this.code.append("i32");
+                    else if(type.equals("boolean")) this.code.append("bool");
+                    else this.code.append(type);
+                    this.code.append(", ");
                 }
             }
+            this.code.append(jmmNode.getJmmChild(jmmNode.getNumChildren()-1).get("value") + ".");
+            var type = getType(localVariables, jmmNode.getJmmChild(jmmNode.getNumChildren()-1).get("value"));
+            if(type.equals("int")) this.code.append("i32");
+            else if(type.equals("boolean")) this.code.append("bool");
+            else this.code.append(type);
+            this.code.append(").V;\n");
+        } else {
+            this.code.append(", \"" + method + "\").V;\n");
         }
-        if(jmmNode.getNumChildren() == 1) {
-            for(var localVar: localVariables) {
-                if(localVar.getName().equals(dest)) {
-                    if(localVar.getType().getName().equals("int")) this.code.append("\t\tinvokevirtual(" + dest + ".i32, \"" + method + "\").V;\n");
-                    else if(localVar.getType().getName().equals("boolean")) this.code.append("\t\tinvokevirtual(" + dest + ".bool, \"" + method + "\").V;\n");
-                    else this.code.append("\t\tinvokevirtual(" + dest + "." + localVar.getType().getName() + ", \"" + method + "\").V;\n");
-                }
-            }
-        }
-
     }
 
     public String operationVisit(JmmNode jmmNode, List<Symbol> localVariables, int index, String type, StringBuilder tmp) {
