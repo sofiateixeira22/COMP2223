@@ -42,8 +42,6 @@ public class Launcher {
         // Check if there are parsing errors
         TestUtils.noErrors(parserResult.getReports());
 
-        System.out.println("/////////////////////////////////////");
-
         // ... add remaining stages
     }
 

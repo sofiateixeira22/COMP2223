@@ -16,6 +16,7 @@ import java.util.*;
 public class SemanticAnalysis implements JmmAnalysis {
 
     List<Symbol> currentMethodVariables = new ArrayList<>();
+    List<Symbol> currentMethodParameters = new ArrayList<>();
 
     List<Report> reports = new ArrayList<>();
 
@@ -41,6 +42,14 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
 
         for (Symbol variable : this.currentMethodVariables){
+            System.out.println("VAR NAME: " + varName);
+            System.out.println("VARIABLE: " + variable.getName());
+            if (variable.getName().equals(varName)){
+                return new Pair<>(true, variable.getType());
+            }
+        }
+
+        for (Symbol variable : this.currentMethodParameters){
             if (variable.getName().equals(varName)){
                 return new Pair<>(true, variable.getType());
             }
@@ -67,52 +76,42 @@ public class SemanticAnalysis implements JmmAnalysis {
         return new Pair<>(false, null);
     }
 
-    public Type getSymbolType(String symbolName){
-        if (this.currentMethodVariables == null){
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Variable " + symbolName + " has no previous declaration"));
-            this.counter+=1;
-            return new Type(null, false);
-        }
-        for (Symbol symbol : this.currentMethodVariables){
-            if (symbol.getName().equals(symbolName)){
-                return symbol.getType();
-            }
-        }
-
-        return new Type(null, false);
-    }
-
-    public void  checkMathOperation(JmmNode jmmNode, String opType){
+    public Pair<Boolean, Type>  checkOperation(JmmNode jmmNode, String opType){
 
         JmmNode child1 = jmmNode.getChildren().get(0);
         JmmNode child2 = jmmNode.getChildren().get(1);
 
-        String type1 = "int";
-        String type2 = "int";
+        String expectedType = "";
 
+        boolean validOperation = false;
 
-        if (child1.toString().contains("IdentifierExpr")){
-            type1 = getSymbolType(child1.get("value")).getName();
+        if (opType.equals("logical")){
+            expectedType = "boolean";
         }
-        else if (child1.toString().contains("ArrayNew")){
-            type1 = "array";
-            return;
-        }
-
-        if (child2.toString().contains("IdentifierExpr")){
-            type2 = getSymbolType(child2.get("value")).getName();
-        }
-        else if (child2.toString().contains("ArrayNew")){
-            type2 = "array";
+        if (opType.equals("additive") || opType.equals("multiplicative")) {
+            expectedType = "int";
         }
 
-        if ((type1 != "int" && type1 != "float") || (type2 != "int" && type2 != "float")){
+        String type1 = "";
+        String type2 = "";
+
+        Pair<Boolean, Type> var1Check = traverseTree(child1);
+        Pair<Boolean, Type> var2Check = traverseTree(child2);
+
+        if (var1Check.a && var1Check.a){
+            if (var1Check.b.getName().equals(expectedType) && var2Check.b.getName().equals(expectedType)){
+                validOperation = true;
+            }
+        }
+
+        if (!validOperation){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Cannot carry out " + opType + " operation between type: "  + type1 + " and type: " + type2));
+                    "Cannot execute " + opType + " operation between variable of type " + var1Check.b.getName() + " and variable of type " + var2Check.b.getName()));
             this.counter+=1;
+            return new Pair<>(false, null);
         }
 
+        return new Pair<>(true, new Type(expectedType, false));
     }
 
    public Pair<Boolean, Type> checkClassNew(JmmNode jmmNode){
@@ -187,21 +186,45 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     }
 
-    public void checkMethodCall(JmmNode jmmNode){
-        String funcCaller = jmmNode.getChildren().get(0).get("value");
-        String funcName = jmmNode.getChildren().get(1).get("value");
-        System.out.println("SUPER: " + this.table.getSuper());
-        if ((this.table.getSuper() != null && (!isInImports(getSymbolType(funcCaller).getName()) && !isInImports(this.table.getSuper()))) || !isInImports(getSymbolType(funcCaller).getName())){
+    public Pair<Boolean, Type> checkMethodCall(JmmNode jmmNode){
 
-            if (!isInImports(getSymbolType(funcCaller).getName()) && !isInImports(this.table.getSuper())) {
+        String methodCaller = jmmNode.getJmmChild(0).get("value");
+        String methodCalled = jmmNode.getJmmChild(1).get("value");
+        Pair<Boolean, Type> checkMethodCaller = checkVariableExists(methodCaller);
+        Pair<Boolean, Type> checkMethodCall = checkMethodExists(methodCalled);
 
-                if (!this.table.getMethods().contains(funcName)) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                            "Call to method: " + funcName + " cannot be completed because it does not exist."));
-                    this.counter += 1;
+        boolean assumedMethod = false;
+
+        if (isInImports(checkMethodCaller.b.getName()) || isInImports(this.table.getSuper())){
+            assumedMethod = true;
+            return new Pair<>(true, null);
+        }
+
+        boolean validMethodCall = false;
+
+        if (checkMethodCall.a || assumedMethod) {
+
+            for (JmmNode child : jmmNode.getChildren()) {
+                if (child.getIndexOfSelf() != 0 && child.toString().contains("IdentifierExpr")) {
+                    Pair<Boolean, Type> checkParam = checkVariableExists(child.get("value"));
+                    if (this.table.getParameters(methodCalled).get(child.getIndexOfSelf()).getName().equals(checkParam.b.getName())) {
+                        continue;
+                    } else {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                                "Invalid parameter " + checkParam.b.getName() + " in function call."));
+                        validMethodCall = false;
+                    }
                 }
             }
         }
+
+        if (!validMethodCall){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Cannot assign variable of type " + " to variable of type: "));
+            return new Pair<>(false, null);
+        }
+
+        return new Pair<>(false, null);
     }
 
     public void checkCondition(JmmNode jmmNode){
@@ -214,21 +237,23 @@ public class SemanticAnalysis implements JmmAnalysis {
     }
 
     public void checkReturn(JmmNode jmmNode){
-        for (JmmNode child : jmmNode.getChildren()){
-            traverseTree(child);
-        }
+
     }
 
     public Pair<Boolean, Type> traverseTree(JmmNode jmmNode){
 
         if (jmmNode.toString().contains("MethodDeclaration")){
             this.currentMethodVariables = this.table.getLocalVariables(jmmNode.getChildren().get(1).get("value"));
+            this.currentMethodParameters = this.table.getParameters(jmmNode.getChildren().get(1).get("value"));
         }
         if (jmmNode.toString().contains("MultiplicativeOp")){
-            checkMathOperation(jmmNode, "multiplicative");
+            return checkOperation(jmmNode, "multiplicative");
         }
         if (jmmNode.toString().contains("AdditiveOp")){
-            checkMathOperation(jmmNode, "additive");
+            return checkOperation(jmmNode, "additive");
+        }
+        if (jmmNode.toString().contains("LogicalOp")){
+            return checkOperation(jmmNode, "logical");
         }
         if (jmmNode.toString().contains("AssignmentOp")){
             checkAssignment(jmmNode);
@@ -246,7 +271,7 @@ public class SemanticAnalysis implements JmmAnalysis {
             checkArrayAccess(jmmNode);
         }
         if (jmmNode.toString().contains("MethodCall")){
-            checkMethodCall(jmmNode);
+            return checkMethodCall(jmmNode);
         }
         if (jmmNode.toString().contains("Condition")){
             checkCondition(jmmNode);
@@ -272,13 +297,7 @@ public class SemanticAnalysis implements JmmAnalysis {
         var table = new SymbolTable(jmmParserResult);
         this.table = table;
 
-        System.out.println(jmmParserResult.getRootNode().toTree());
-
-        //SemanticVisitor semanticVisitor = new SemanticVisitor();
-
-        //semanticVisitor.visit(jmmParserResult.getRootNode());
-
-        //System.out.println(table.print());
+        //System.out.println(jmmParserResult.getRootNode().toTree());
 
         traverseTree(jmmParserResult.getRootNode());
 
