@@ -30,8 +30,8 @@ varDeclaration
 
 
 methodDeclaration
-    : 'public'? type identifier '(' (type identifier ( ',' type identifier)* )? ')' '{' (varDeclaration)* (statement)* expression ';' '}'
-    | 'public'? 'static' type identifier '(' type '[' ']' identifier ')' '{' (varDeclaration)* (statement)* '}'
+    : 'public'? type identifier '(' (type identifier ( ',' type identifier)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}'
+    | 'public'? 'static' type identifier '(' type identifier ')' '{' (varDeclaration)* (statement)* '}'
     ;
 
     type
@@ -51,7 +51,7 @@ identifier
 statement
     : '{'(statement)*'}'
     | 'if' '(' condition ')' statement 'else' statement
-    | 'while' '(' expression ')' statement
+    | 'while' '(' condition ')' statement
     | expression ';'
     | identifier '=' expression ';'
     | identifier '[' expression ']' '=' expression ';'
@@ -65,7 +65,7 @@ expression
     : '(' expression ')' #Parentheses
     | expression '[' expression ']' #BinaryOp
     | expression '.' 'length' #Length
-    | expression '.' functionName '(' ( functionParam ( ',' functionParam )* )? ')' #MethodCall
+    | expression '.' functionName '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | expression ('++' | '--') #UnaryPostOp
     | ('!' | '++' | '--') expression #UnaryPreOp
     | 'new' type '[' expression ']' #ArrayNew

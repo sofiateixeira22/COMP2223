@@ -57,7 +57,7 @@ public class SimpleParser implements JmmParser {
             // Convert ANTLR CST to JmmNode AST
             var report = AntlrParser.parse(lex, parser, startingRule);
 
-            //System.out.println(report.get().toTree());
+            System.out.println(report.get().toTree());
 
             //System.out.println("----------------------------");
 
