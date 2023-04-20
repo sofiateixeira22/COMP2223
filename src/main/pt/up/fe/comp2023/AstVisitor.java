@@ -132,9 +132,10 @@ public class AstVisitor extends AJmmVisitor {
                 currentMethod = nextChild.get("value");
             } else if (childKind.equals(type)){
                 JmmNode nextChild = jmmNode.getJmmChild(i+1);
+                String last2Chars = child.get("t").length() > 2 ? child.get("t").substring(child.get("t").length() - 2) : child.get("t");
+                boolean isArray = (Objects.equals(last2Chars, "[]"));
                 String typeName = child.get("t");
                 String symbolName = nextChild.get("value");
-                boolean isArray = false;
 
                 Type mtype = new Type(typeName, isArray);
                 Symbol symbol = new Symbol(mtype, symbolName);

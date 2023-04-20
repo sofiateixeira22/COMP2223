@@ -36,10 +36,10 @@ methodDeclaration
 
     type
         : t='int[]'
+        | t='boolean[]'
+        | t='String[]'
         | t='boolean'
         | t='int'
-        | t='string[]'
-        | t='boolean[]'
         | t=ID
         ;
 
