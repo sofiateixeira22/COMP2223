@@ -96,6 +96,34 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     }
 
+    public void checkLogicalOperation(JmmNode jmmNode){
+        JmmNode child1 = jmmNode.getChildren().get(0);
+        JmmNode child2 = jmmNode.getChildren().get(1);
+
+        String type1 = "boolean";
+        String type2 = "boolean";
+
+        if (child1.toString().contains("IdentifierExpr")){
+            type1 = getSymbolType(child1.get("value")).getName();
+        }
+        else if (child1.toString().contains("ArrayNew")){
+            type1 = "array";
+            return;
+        }
+
+        if (child2.toString().contains("IdentifierExpr")){
+            type2 = getSymbolType(child2.get("value")).getName();
+        }
+        else if (child2.toString().contains("ArrayNew")){
+            type2 = "array";
+        }
+
+        if (type1 != "boolean" || type2 != "boolean"){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Cannot carry out logical operation between type: "  + type1 + " and type: " + type2));
+            this.counter+=1;
+        }
+    }
     public void checkNewArray(JmmNode jmmNode){
 
     }
@@ -223,6 +251,9 @@ public class SemanticAnalysis implements JmmAnalysis {
             checkArrayAccess(jmmNode);
         }
         if (jmmNode.toString().contains("MethodCall")){
+            checkMethodCall(jmmNode);
+        }
+        if (jmmNode.toString().contains("LogicalOp")){
             checkMethodCall(jmmNode);
         }
         if (jmmNode.toString().contains("Condition")){
