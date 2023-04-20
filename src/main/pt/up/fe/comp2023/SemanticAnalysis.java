@@ -172,10 +172,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         if (checkedVar2.a && checkedVar.a && checkedVar.b.isArray()){
 
-            if (checkedVar2.b == checkedVar.b){
-                validAccess = true;
-            }
-            if (isInImports(checkedVar2.b.getName()) || isInImports(checkedVar.b.getName())) {
+            if (checkedVar2.b.getName() == "int"){
                 validAccess = true;
             }
             if (!validAccess){
