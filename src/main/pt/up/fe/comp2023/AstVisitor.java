@@ -15,10 +15,10 @@ public class AstVisitor extends AJmmVisitor {
     String superString;
     List<Symbol> fields = new ArrayList<>();
     List<String> methods = new ArrayList<>();
-    Type returnType;
     Map<String, Type> methodTypes = new HashMap<>();
     Map<String, List<Symbol>> methodParameters = new HashMap<>();
-    List<Symbol> localVariables = new ArrayList<>();
+    Map<String, List<Symbol>> localVariables = new HashMap<>();
+    List<Symbol> auxLocalVariables = new ArrayList<>();
 
 
     public AstVisitor(){
@@ -62,7 +62,7 @@ public class AstVisitor extends AJmmVisitor {
 
     public Map<String, List<Symbol>> getMethodParameters(){return this.methodParameters;}
 
-    public List<Symbol> getLocalVariables(){return this.localVariables;}
+    public Map<String, List<Symbol>> getLocalVariables(){return this.localVariables;}
 
     private String classDeclarationVisit(JmmNode jmmNode, String s) {
 
@@ -93,6 +93,8 @@ public class AstVisitor extends AJmmVisitor {
     private String methodDeclarationVisit(JmmNode jmmNode, String s) {
 
         List<Symbol> parameters = new ArrayList<>();
+
+        auxLocalVariables.clear();
 
         String currentMethod = "";
 
@@ -191,7 +193,9 @@ public class AstVisitor extends AJmmVisitor {
         Symbol newSymbol = new Symbol(type, symbolName);
 
         if (methodCaller.equals("MethodDeclaration")){
-            this.localVariables.add(newSymbol);
+            String methodName = jmmNode.getJmmParent().getChildren().get(1).get("value");
+            auxLocalVariables.add(newSymbol);
+            this.localVariables.put(methodName, auxLocalVariables);
         }
         else {
             this.fields.add(newSymbol);
