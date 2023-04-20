@@ -96,22 +96,6 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     }
 
-    public void checkLogicalOperation(JmmNode jmmNode){
-        JmmNode child1 = jmmNode.getChildren().get(0);
-        JmmNode child2 = jmmNode.getChildren().get(1);
-
-        String type1 = "boolean";
-        String type2 = "boolean";
-
-        type2 = getSymbolType(child2.get("value")).getName();
-        type1 = getSymbolType(child1.get("value")).getName();
-
-        if (!Objects.equals(type1, "boolean") || !Objects.equals(type2, "boolean")){
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Cannot carry out logical operation between type: "  + type1 + " and type: " + type2));
-            this.counter+=1;
-        }
-    }
     public void checkNewArray(JmmNode jmmNode){
 
     }
@@ -240,9 +224,6 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
         if (jmmNode.toString().contains("MethodCall")){
             checkMethodCall(jmmNode);
-        }
-        if (jmmNode.toString().contains("LogicalOp")){
-            checkLogicalOperation(jmmNode);
         }
         if (jmmNode.toString().contains("Condition")){
             checkCondition(jmmNode);
