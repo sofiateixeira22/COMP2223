@@ -162,6 +162,12 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         boolean validAccess = false;
 
+        if (!checkedVar.b.isArray()){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Cannot access index of non array object:  " + checkedVar.b.getName()));
+            return new Pair<>(false, null);
+        }
+
         checkedVar2 = traverseTree(jmmNode.getJmmChild(1));
 
         if (checkedVar2.a && checkedVar.a && checkedVar.b.isArray()){
