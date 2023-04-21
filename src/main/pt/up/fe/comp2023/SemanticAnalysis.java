@@ -132,6 +132,11 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         boolean validAssignment = false;
 
+        if (!checkedVar.a){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Variable " + assignment1.get("value") + " does not exist."));
+        }
+
         checkedVar2 = traverseTree(assignment2);
 
         if (checkedVar2.a && checkedVar.a) {
