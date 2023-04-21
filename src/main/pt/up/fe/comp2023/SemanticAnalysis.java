@@ -113,10 +113,10 @@ public class SemanticAnalysis implements JmmAnalysis {
         return new Pair<>(true, new Type(expectedType, false));
     }
 
-   public Pair<Boolean, Type> checkClassNew(JmmNode jmmNode){
+    public Pair<Boolean, Type> checkClassNew(JmmNode jmmNode){
 
         return new Pair<>(false, null);
-   }
+    }
 
     public Pair<Boolean, Type> checkArrayNew(JmmNode jmmNode){
 
