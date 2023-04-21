@@ -165,7 +165,7 @@ public class SemanticAnalysis implements JmmAnalysis {
             }
             if (!validAssignment){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                        "Cannot assign variable of type " + checkedVar2.b.getName() + " to variable of type: " + checkedVar.b.getName()));
+                        "Cannot assign variable of incompatible types."));
                 return new Pair<>(false, null);
 
             }
@@ -184,7 +184,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         if (!checkedVar.b.isArray()){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Cannot access index of non array object:  " + checkedVar.b.getName()));
+                    "Cannot access index of non array object."));
             return new Pair<>(false, null);
         }
 
@@ -199,7 +199,7 @@ public class SemanticAnalysis implements JmmAnalysis {
             }
             if (!validAccess){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                        "Cannot assign variable of type " + checkedVar2.b.getName() + " to variable of type: " + checkedVar.b.getName()));
+                        "Cannot assign variable of incompatible types."));
                 return new Pair<>(false, null);
             }
         }
@@ -227,12 +227,12 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         if (!checkMethodCall.a){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Method: " + methodCalled + " does not exist."));
+                    "Method called does not exist."));
             return new Pair<>(false, null);
         }
         if (!isInImports(checkMethodCaller.b.getName())){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Class: " + checkMethodCaller.b.getName() + " not imported."));
+                    "Class not imported."));
             return new Pair<>(false, null);
         }
 
@@ -246,7 +246,7 @@ public class SemanticAnalysis implements JmmAnalysis {
                     continue;
                 } else {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                            "Invalid parameter " + checkParam.b.getName() + " in function call."));
+                            "Invalid parameter in function call."));
                     validMethodCall = false;
                 }
             }
@@ -255,7 +255,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
                 if (!checkReturn.b.getName().equals(checkMethodCall.b.getName())){
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                            "Return type " + checkReturn.b.getName() +" is not compatible with: " + checkMethodCall.b.getName()));
+                            "Return type is not compatible with function declaration."));
                 }
             }
         }
