@@ -145,7 +145,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         if (!checkedVar.a){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Variable " + assignment1.get("value") + " does not exist."));
+                    "Variable does not exist."));
             return new Pair<>(false, null);
         }
 
@@ -153,14 +153,13 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         if (checkedVar2.a && checkedVar.a) {
 
-            if (checkedVar2.b == checkedVar.b) {
+            if (checkedVar2.b.equals(checkedVar.b)) {
                 validAssignment = true;
             }
             if (isInImports(checkedVar2.b.getName()) && isInImports(checkedVar.b.getName())){
                 validAssignment = true;
             }
             if (checkedVar2.b.getName().equals(this.table.getSuper()) || checkedVar.b.getName().equals(this.table.getSuper())) {
-
                 validAssignment = true;
             }
             if (!validAssignment){
@@ -189,6 +188,8 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
 
         checkedVar2 = traverseTree(jmmNode.getJmmChild(1));
+
+        System.out.println("CHECKED VAR IS: " + checkedVar2);
 
         if (checkedVar2.a && checkedVar.a){
 
@@ -270,6 +271,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     public void checkCondition(JmmNode jmmNode){
         String childType = jmmNode.getChildren().toString();
+
         if (!childType.contains("Boolean") && !childType.contains("LogicalOp")){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                     "Invalid Condition"));
@@ -315,6 +317,9 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
         if (jmmNode.toString().contains("Integer")){
             return new Pair<>(true, new Type("int", false));
+        }
+        if (jmmNode.toString().contains("Boolean")){
+            return new Pair<>(true, new Type("boolean", false));
         }
         if (jmmNode.toString().contains("ThisExpr")){
             return new Pair<>(true, new Type(this.table.getClassName(), false));
