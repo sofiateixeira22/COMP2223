@@ -270,14 +270,18 @@ public class SemanticAnalysis implements JmmAnalysis {
         return new Pair<>(false, null);
     }
 
-    public void checkCondition(JmmNode jmmNode){
-        String childType = jmmNode.getChildren().toString();
+    public Pair<Boolean, Type> checkCondition(JmmNode jmmNode){
 
-        if (!childType.contains("Boolean") && !childType.contains("LogicalOp")){
+        Pair<Boolean, Type> checkCondition = traverseTree(jmmNode.getJmmChild(0));
+
+        if (!checkCondition.b.equals(new Type("boolean", false))){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                     "Invalid Condition"));
             this.counter += 1;
+            return new Pair<>(false, null);
         }
+
+        return new Pair<>(true, new Type("boolean", false));
     }
 
     public Pair<Boolean, Type> traverseTree(JmmNode jmmNode){
@@ -314,7 +318,7 @@ public class SemanticAnalysis implements JmmAnalysis {
             return checkMethodCall(jmmNode);
         }
         if (jmmNode.toString().equals("Condition")){
-            checkCondition(jmmNode);
+            return checkCondition(jmmNode);
         }
         if (jmmNode.toString().contains("Integer")){
             return new Pair<>(true, new Type("int", false));
