@@ -59,6 +59,14 @@ public class SemanticAnalysis implements JmmAnalysis {
             }
         }
 
+        if (this.table.getImports() != null) {
+            for (String variable : this.table.getImports()) {
+                if (variable.equals(varName)) {
+                    return new Pair<>(true, null);
+                }
+            }
+        }
+
         reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                 "Variable with the name: " + varName + " has no previous assignment."));
 
