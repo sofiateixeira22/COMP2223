@@ -283,25 +283,25 @@ public class SemanticAnalysis implements JmmAnalysis {
             this.currentMethodVariables = this.table.getLocalVariables(jmmNode.getChildren().get(1).get("value"));
             this.currentMethodParameters = this.table.getParameters(jmmNode.getChildren().get(1).get("value"));
         }
-        if (jmmNode.toString().equals("MultiplicativeOp")){
+        if (jmmNode.toString().contains("MultiplicativeOp")){
             return checkOperation(jmmNode, "multiplicative");
         }
-        if (jmmNode.toString().equals("AdditiveOp")){
+        if (jmmNode.toString().contains("AdditiveOp")){
             return checkOperation(jmmNode, "additive");
         }
-        if (jmmNode.toString().equals("LogicalOp")){
+        if (jmmNode.toString().contains("LogicalOp")){
             return checkOperation(jmmNode, "logical");
         }
         if (jmmNode.toString().equals("AssignmentOp")){
             return checkAssignment(jmmNode);
         }
-        if (jmmNode.toString().equals("ArrayNew")){
+        if (jmmNode.toString().contains("ArrayNew")){
             return checkArrayNew(jmmNode);
         }
-        if (jmmNode.toString().equals("ClassNew")){
+        if (jmmNode.toString().contains("ClassNew")){
             return checkClassNew(jmmNode);
         }
-        if (jmmNode.toString().equals("IdentifierExpr")){
+        if (jmmNode.toString().contains("IdentifierExpr")){
             return checkVariableExists(jmmNode.get("value"));
         }
         if (jmmNode.toString().equals("BinaryOp")){
@@ -313,10 +313,10 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (jmmNode.toString().equals("Condition")){
             checkCondition(jmmNode);
         }
-        if (jmmNode.toString().equals("Integer")){
+        if (jmmNode.toString().contains("Integer")){
             return new Pair<>(true, new Type("int", false));
         }
-        if (jmmNode.toString().equals("ThisExpr")){
+        if (jmmNode.toString().contains("ThisExpr")){
             return new Pair<>(true, new Type(this.table.getClassName(), false));
         }
         else if (jmmNode.getChildren() != null){
