@@ -138,7 +138,7 @@ public class SemanticAnalysis implements JmmAnalysis {
         JmmNode assignment1 = jmmNode.getChildren().get(0);
         JmmNode assignment2 = jmmNode.getChildren().get(1);
 
-        Pair<Boolean, Type> checkedVar = checkVariableExists(assignment1.get("value"));
+        Pair<Boolean, Type> checkedVar = traverseTree(assignment1);
         Pair<Boolean, Type> checkedVar2;
 
         boolean validAssignment = false;
@@ -175,9 +175,9 @@ public class SemanticAnalysis implements JmmAnalysis {
     }
 
     public Pair<Boolean, Type> checkArrayAccess(JmmNode jmmNode){
-        String arrayName = jmmNode.getJmmChild(0).get("value");
 
-        Pair<Boolean, Type> checkedVar = checkVariableExists(arrayName);
+        System.out.println("JMM NODE IS: " + jmmNode.toString());
+        Pair<Boolean, Type> checkedVar = traverseTree(jmmNode.getJmmChild(0));
         Pair<Boolean, Type> checkedVar2;
 
         boolean validAccess = false;
@@ -279,44 +279,44 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     public Pair<Boolean, Type> traverseTree(JmmNode jmmNode){
 
-        if (jmmNode.toString().contains("MethodDeclaration")){
+        if (jmmNode.toString().equals("MethodDeclaration")){
             this.currentMethodVariables = this.table.getLocalVariables(jmmNode.getChildren().get(1).get("value"));
             this.currentMethodParameters = this.table.getParameters(jmmNode.getChildren().get(1).get("value"));
         }
-        if (jmmNode.toString().contains("MultiplicativeOp")){
+        if (jmmNode.toString().equals("MultiplicativeOp")){
             return checkOperation(jmmNode, "multiplicative");
         }
-        if (jmmNode.toString().contains("AdditiveOp")){
+        if (jmmNode.toString().equals("AdditiveOp")){
             return checkOperation(jmmNode, "additive");
         }
-        if (jmmNode.toString().contains("LogicalOp")){
+        if (jmmNode.toString().equals("LogicalOp")){
             return checkOperation(jmmNode, "logical");
         }
-        if (jmmNode.toString().contains("AssignmentOp")){
+        if (jmmNode.toString().equals("AssignmentOp")){
             return checkAssignment(jmmNode);
         }
-        if (jmmNode.toString().contains("ArrayNew")){
+        if (jmmNode.toString().equals("ArrayNew")){
             return checkArrayNew(jmmNode);
         }
-        if (jmmNode.toString().contains("ClassNew")){
+        if (jmmNode.toString().equals("ClassNew")){
             return checkClassNew(jmmNode);
         }
-        if (jmmNode.toString().contains("IdentifierExpr")){
+        if (jmmNode.toString().equals("IdentifierExpr")){
             return checkVariableExists(jmmNode.get("value"));
         }
-        if (jmmNode.toString().contains("BinaryOp")){
+        if (jmmNode.toString().equals("BinaryOp")){
             return checkArrayAccess(jmmNode);
         }
-        if (jmmNode.toString().contains("MethodCall")){
+        if (jmmNode.toString().equals("MethodCall")){
             return checkMethodCall(jmmNode);
         }
-        if (jmmNode.toString().contains("Condition")){
+        if (jmmNode.toString().equals("Condition")){
             checkCondition(jmmNode);
         }
-        if (jmmNode.toString().contains("Integer")){
+        if (jmmNode.toString().equals("Integer")){
             return new Pair<>(true, new Type("int", false));
         }
-        if (jmmNode.toString().contains("ThisExpr")){
+        if (jmmNode.toString().equals("ThisExpr")){
             return new Pair<>(true, new Type(this.table.getClassName(), false));
         }
         else if (jmmNode.getChildren() != null){
