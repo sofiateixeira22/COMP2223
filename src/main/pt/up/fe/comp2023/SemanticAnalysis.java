@@ -96,15 +96,16 @@ public class SemanticAnalysis implements JmmAnalysis {
         Pair<Boolean, Type> var1Check = traverseTree(child1);
         Pair<Boolean, Type> var2Check = traverseTree(child2);
 
-        if (var1Check.a && var1Check.a){
+        if (var1Check.a && var2Check.a){
             if (var1Check.b.getName().equals(expectedType) && var2Check.b.getName().equals(expectedType)){
                 validOperation = true;
             }
         }
 
         if (!validOperation){
+            System.out.println("VAR 2CHECK : " + var2Check);
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Cannot execute " + opType + " operation between variable of type " + var1Check.b.getName() + " and variable of type " + var2Check.b.getName()));
+                    "Cannot execute operation between variable types"));
             this.counter+=1;
             return new Pair<>(false, null);
         }
@@ -119,56 +120,77 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     public Pair<Boolean, Type> checkArrayNew(JmmNode jmmNode){
 
-        return new Pair<>(false, null);
+        String arrayType = jmmNode.getJmmChild(0).get("t");
+        Pair<Boolean, Type> checkArrayIndex = traverseTree(jmmNode.getJmmChild(1));
+
+        if (!checkArrayIndex.b.getName().equals("int")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Cannot initialize array with non-int length."));
+            this.counter+=1;
+
+            return new Pair<>(false, null);
+        }
+
+        return new Pair<>(true, new Type(arrayType, true));
     }
 
-    public void checkAssignment(JmmNode jmmNode){
+    public Pair<Boolean, Type> checkAssignment(JmmNode jmmNode){
 
         JmmNode assignment1 = jmmNode.getChildren().get(0);
         JmmNode assignment2 = jmmNode.getChildren().get(1);
 
-        Pair<Boolean, Type> checkedVar = checkVariableExists(assignment1.get("value"));
+        Pair<Boolean, Type> checkedVar = traverseTree(assignment1);
         Pair<Boolean, Type> checkedVar2;
 
         boolean validAssignment = false;
+
+        if (!checkedVar.a){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Variable does not exist."));
+            return new Pair<>(false, null);
+        }
 
         checkedVar2 = traverseTree(assignment2);
 
         if (checkedVar2.a && checkedVar.a) {
 
-            if (checkedVar2.b == checkedVar.b) {
+            if (checkedVar2.b.equals(checkedVar.b)) {
                 validAssignment = true;
             }
             if (isInImports(checkedVar2.b.getName()) && isInImports(checkedVar.b.getName())){
                 validAssignment = true;
             }
             if (checkedVar2.b.getName().equals(this.table.getSuper()) || checkedVar.b.getName().equals(this.table.getSuper())) {
-
                 validAssignment = true;
             }
             if (!validAssignment){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                        "Cannot assign variable of type " + checkedVar2.b.getName() + " to variable of type: " + checkedVar.b.getName()));
+                        "Cannot assign variable of incompatible types."));
+                return new Pair<>(false, null);
 
             }
         }
+
+        return new Pair<>(true, checkedVar2.b);
     }
 
     public Pair<Boolean, Type> checkArrayAccess(JmmNode jmmNode){
-        String arrayName = jmmNode.getJmmChild(0).get("value");
 
-        Pair<Boolean, Type> checkedVar = checkVariableExists(arrayName);
+        System.out.println("JMM NODE IS: " + jmmNode.toString());
+        Pair<Boolean, Type> checkedVar = traverseTree(jmmNode.getJmmChild(0));
         Pair<Boolean, Type> checkedVar2;
 
         boolean validAccess = false;
 
         if (!checkedVar.b.isArray()){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Cannot access index of non array object:  " + checkedVar.b.getName()));
+                    "Cannot access index of non array object."));
             return new Pair<>(false, null);
         }
 
         checkedVar2 = traverseTree(jmmNode.getJmmChild(1));
+
+        System.out.println("CHECKED VAR IS: " + checkedVar2);
 
         if (checkedVar2.a && checkedVar.a){
 
@@ -177,7 +199,7 @@ public class SemanticAnalysis implements JmmAnalysis {
             }
             if (!validAccess){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                        "Cannot assign variable of type " + checkedVar2.b.getName() + " to variable of type: " + checkedVar.b.getName()));
+                        "Cannot assign variable of incompatible types."));
                 return new Pair<>(false, null);
             }
         }
@@ -188,15 +210,14 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     public Pair<Boolean, Type> checkMethodCall(JmmNode jmmNode){
 
-        String methodCaller = jmmNode.getJmmChild(0).get("value");
+        Pair<Boolean, Type> checkMethodCaller = traverseTree(jmmNode.getJmmChild(0));
         String methodCalled = jmmNode.getJmmChild(1).get("value");
 
-        Pair<Boolean, Type> checkMethodCaller = checkVariableExists(methodCaller);
         Pair<Boolean, Type> checkMethodCall = checkMethodExists(methodCalled);
 
         if (!checkMethodCaller.a){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Method Caller: " + methodCaller + " does not exist."));
+                    "Method Caller does not exist."));
             return new Pair<>(false, null);
         }
 
@@ -206,12 +227,12 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         if (!checkMethodCall.a){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Method: " + methodCalled + " does not exist."));
+                    "Method called does not exist."));
             return new Pair<>(false, null);
         }
-        if (!isInImports(methodCaller)){
+        if (!isInImports(checkMethodCaller.b.getName())){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Class: " + methodCaller + " not imported."));
+                    "Class not imported."));
             return new Pair<>(false, null);
         }
 
@@ -225,7 +246,7 @@ public class SemanticAnalysis implements JmmAnalysis {
                     continue;
                 } else {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                            "Invalid parameter " + checkParam.b.getName() + " in function call."));
+                            "Invalid parameter in function call."));
                     validMethodCall = false;
                 }
             }
@@ -234,7 +255,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
                 if (!checkReturn.b.getName().equals(checkMethodCall.b.getName())){
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                            "Return type " + checkReturn.b.getName() +" is not compatible with: " + checkMethodCall.b.getName()));
+                            "Return type is not compatible with function declaration."));
                 }
             }
         }
@@ -251,6 +272,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     public void checkCondition(JmmNode jmmNode){
         String childType = jmmNode.getChildren().toString();
+
         if (!childType.contains("Boolean") && !childType.contains("LogicalOp")){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                     "Invalid Condition"));
@@ -260,7 +282,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     public Pair<Boolean, Type> traverseTree(JmmNode jmmNode){
 
-        if (jmmNode.toString().contains("MethodDeclaration")){
+        if (jmmNode.toString().equals("MethodDeclaration")){
             this.currentMethodVariables = this.table.getLocalVariables(jmmNode.getChildren().get(1).get("value"));
             this.currentMethodParameters = this.table.getParameters(jmmNode.getChildren().get(1).get("value"));
         }
@@ -273,8 +295,8 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (jmmNode.toString().contains("LogicalOp")){
             return checkOperation(jmmNode, "logical");
         }
-        if (jmmNode.toString().contains("AssignmentOp")){
-            checkAssignment(jmmNode);
+        if (jmmNode.toString().equals("AssignmentOp")){
+            return checkAssignment(jmmNode);
         }
         if (jmmNode.toString().contains("ArrayNew")){
             return checkArrayNew(jmmNode);
@@ -285,17 +307,23 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (jmmNode.toString().contains("IdentifierExpr")){
             return checkVariableExists(jmmNode.get("value"));
         }
-        if (jmmNode.toString().contains("BinaryOp")){
+        if (jmmNode.toString().equals("BinaryOp")){
             return checkArrayAccess(jmmNode);
         }
-        if (jmmNode.toString().contains("MethodCall")){
+        if (jmmNode.toString().equals("MethodCall")){
             return checkMethodCall(jmmNode);
         }
-        if (jmmNode.toString().contains("Condition")){
+        if (jmmNode.toString().equals("Condition")){
             checkCondition(jmmNode);
         }
         if (jmmNode.toString().contains("Integer")){
             return new Pair<>(true, new Type("int", false));
+        }
+        if (jmmNode.toString().contains("Boolean")){
+            return new Pair<>(true, new Type("boolean", false));
+        }
+        if (jmmNode.toString().contains("ThisExpr")){
+            return new Pair<>(true, new Type(this.table.getClassName(), false));
         }
         else if (jmmNode.getChildren() != null){
             for (JmmNode child : jmmNode.getChildren()){
