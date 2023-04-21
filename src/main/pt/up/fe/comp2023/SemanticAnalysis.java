@@ -188,15 +188,14 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     public Pair<Boolean, Type> checkMethodCall(JmmNode jmmNode){
 
-        String methodCaller = jmmNode.getJmmChild(0).get("value");
+        Pair<Boolean, Type> checkMethodCaller = traverseTree(jmmNode.getJmmChild(0));
         String methodCalled = jmmNode.getJmmChild(1).get("value");
 
-        Pair<Boolean, Type> checkMethodCaller = checkVariableExists(methodCaller);
         Pair<Boolean, Type> checkMethodCall = checkMethodExists(methodCalled);
 
         if (!checkMethodCaller.a){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Method Caller: " + methodCaller + " does not exist."));
+                    "Method Caller does not exist."));
             return new Pair<>(false, null);
         }
 
@@ -209,9 +208,9 @@ public class SemanticAnalysis implements JmmAnalysis {
                     "Method: " + methodCalled + " does not exist."));
             return new Pair<>(false, null);
         }
-        if (!isInImports(methodCaller)){
+        if (!isInImports(checkMethodCaller.b.getName())){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Class: " + methodCaller + " not imported."));
+                    "Class: " + checkMethodCaller.b.getName() + " not imported."));
             return new Pair<>(false, null);
         }
 
@@ -296,6 +295,9 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
         if (jmmNode.toString().contains("Integer")){
             return new Pair<>(true, new Type("int", false));
+        }
+        if (jmmNode.toString().contains("ThisExpr")){
+            return new Pair<>(true, new Type(this.table.getClassName(), false));
         }
         else if (jmmNode.getChildren() != null){
             for (JmmNode child : jmmNode.getChildren()){
