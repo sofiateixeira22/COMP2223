@@ -119,10 +119,21 @@ public class SemanticAnalysis implements JmmAnalysis {
 
     public Pair<Boolean, Type> checkArrayNew(JmmNode jmmNode){
 
-        return new Pair<>(false, null);
+        String arrayType = jmmNode.getJmmChild(0).get("t");
+        Pair<Boolean, Type> checkArrayIndex = traverseTree(jmmNode.getJmmChild(1));
+
+        if (!checkArrayIndex.b.getName().equals("int")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Cannot initialize array with non-int length."));
+            this.counter+=1;
+
+            return new Pair<>(false, null);
+        }
+
+        return new Pair<>(true, new Type(arrayType, true));
     }
 
-    public void checkAssignment(JmmNode jmmNode){
+    public Pair<Boolean, Type> checkAssignment(JmmNode jmmNode){
 
         JmmNode assignment1 = jmmNode.getChildren().get(0);
         JmmNode assignment2 = jmmNode.getChildren().get(1);
@@ -135,6 +146,7 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (!checkedVar.a){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                     "Variable " + assignment1.get("value") + " does not exist."));
+            return new Pair<>(false, null);
         }
 
         checkedVar2 = traverseTree(assignment2);
@@ -154,9 +166,12 @@ public class SemanticAnalysis implements JmmAnalysis {
             if (!validAssignment){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                         "Cannot assign variable of type " + checkedVar2.b.getName() + " to variable of type: " + checkedVar.b.getName()));
+                return new Pair<>(false, null);
 
             }
         }
+
+        return new Pair<>(true, checkedVar2.b);
     }
 
     public Pair<Boolean, Type> checkArrayAccess(JmmNode jmmNode){
@@ -278,7 +293,7 @@ public class SemanticAnalysis implements JmmAnalysis {
             return checkOperation(jmmNode, "logical");
         }
         if (jmmNode.toString().contains("AssignmentOp")){
-            checkAssignment(jmmNode);
+            return checkAssignment(jmmNode);
         }
         if (jmmNode.toString().contains("ArrayNew")){
             return checkArrayNew(jmmNode);
