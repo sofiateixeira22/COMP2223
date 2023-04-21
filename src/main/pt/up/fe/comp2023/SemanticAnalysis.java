@@ -96,15 +96,16 @@ public class SemanticAnalysis implements JmmAnalysis {
         Pair<Boolean, Type> var1Check = traverseTree(child1);
         Pair<Boolean, Type> var2Check = traverseTree(child2);
 
-        if (var1Check.a && var1Check.a){
+        if (var1Check.a && var2Check.a){
             if (var1Check.b.getName().equals(expectedType) && var2Check.b.getName().equals(expectedType)){
                 validOperation = true;
             }
         }
 
         if (!validOperation){
+            System.out.println("VAR 2CHECK : " + var2Check);
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Cannot execute " + opType + " operation between variable of type " + var1Check.b.getName() + " and variable of type " + var2Check.b.getName()));
+                    "Cannot execute operation between variable types"));
             this.counter+=1;
             return new Pair<>(false, null);
         }
