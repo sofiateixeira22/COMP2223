@@ -62,7 +62,7 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (this.table.getImports() != null) {
             for (String variable : this.table.getImports()) {
                 if (variable.equals(varName)) {
-                    return new Pair<>(true, null);
+                    return new Pair<>(true, new Type (variable, false));
                 }
             }
         }
