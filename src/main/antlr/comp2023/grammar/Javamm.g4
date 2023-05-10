@@ -50,8 +50,8 @@ identifier
 
 statement
     : '{'(statement)*'}'
-    | 'if' '(' condition ')' statement 'else' statement
-    | 'while' '(' condition ')' statement
+    | stmt='if' '(' condition ')' statement 'else' statement
+    | stmt='while' '(' condition ')' statement
     | expression ';'
     | identifier '=' expression ';'
     | identifier '[' expression ']' '=' expression ';'
@@ -74,8 +74,8 @@ expression
     | expression op=('+' | '-') expression #AdditiveOp
     | expression op=('<' | '>' | '<=' | '>=') expression #RelationalOp
     | expression op=('==' | '!=') #EqualityOp
-    | expression '&&' expression #LogicalOp
-    | expression '||' expression #LogicalOp
+    | expression op='&&' expression #LogicalOp
+    | expression op='||' expression #LogicalOp
     | expression ('=' | '+=' | '-=' | '*=' | '/=' | '%=') expression #AssignmentOp
     | value=INTEGER #Integer
     | value='true' #Boolean
