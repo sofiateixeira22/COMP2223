@@ -354,7 +354,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         //System.out.println(jmmParserResult.getRootNode().toTree());
 
-        traverseTree(jmmParserResult.getRootNode());
+        //traverseTree(jmmParserResult.getRootNode());
 
         return new JmmSemanticsResult(jmmParserResult, table, this.reports);
     }
