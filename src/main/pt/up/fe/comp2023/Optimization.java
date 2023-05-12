@@ -538,9 +538,11 @@ public class Optimization implements JmmOptimization {
     public String getReturnVar(String returnType) {
         var method = this.jmmSemanticsResult.getRootNode().getJmmChild(this.indexFirstLevel-1).getJmmChild(this.indexSecondLevel-1);
         StringBuilder returnVar = new StringBuilder();
-        if(method.getJmmChild(method.getNumChildren()-1).hasAttribute("value")) {
-            returnVar.append(method.getJmmChild(method.getNumChildren()-1).get("value"));
-            var type = getType(method.getJmmChild(method.getNumChildren()-1).get("value"));
+        var returnValue = method.getJmmChild(method.getNumChildren()-1).getJmmChild(0).getJmmChild(0);
+
+        if(returnValue.hasAttribute("value")) {
+            returnVar.append(returnValue.get("value"));
+            var type = getType(returnValue.get("value"));
 
             if(type.equals("int[]") || type.equals("boolean[]")) returnVar.append(".array");
             if(returnType.equals("int") || returnType.equals("int[]")) {
@@ -550,8 +552,8 @@ public class Optimization implements JmmOptimization {
                 returnVar.append(".bool");
             }
         }
-        if(method.getJmmChild(method.getNumChildren()-1).getKind().equals("AdditiveOp")) {
-            var operation = operationVisit(method.getJmmChild(method.getNumChildren()-1), 0, returnType, new StringBuilder());
+        if(returnValue.getKind().equals("AdditiveOp")) {
+            var operation = operationVisit(returnValue, 0, returnType, new StringBuilder());
             returnVar.append(operation + ".i32");
         }
         return returnVar.toString();
