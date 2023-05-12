@@ -424,13 +424,25 @@ public class Optimization implements JmmOptimization {
         this.code.append(") goto ifbody_" + this.indexIf + ";\n");
 
         var else_stmt = jmmNode.getJmmChild(2);
-        if(else_stmt.getJmmChild(0).getKind().equals("Statement")) statementVisit(else_stmt.getJmmChild(0));
+        if(else_stmt.getJmmChild(0).getKind().equals("Statement")) {
+            if(else_stmt.getJmmChild(0).hasAttribute("stmt") && else_stmt.getJmmChild(0).get("stmt").equals("if")) {
+                ifVisit(else_stmt.getJmmChild(0));
+                this.indexIf -=1;
+            }
+            else statementVisit(else_stmt.getJmmChild(0));
+        }
 
         this.code.append("\t\tgoto endif_" + this.indexIf + ";\n");
         this.code.append("\t\tifbody_" + this.indexIf + ":\n");
 
         var if_stmt = jmmNode.getJmmChild(1);
-        if(if_stmt.getJmmChild(0).getKind().equals("Statement")) statementVisit(if_stmt.getJmmChild(0));
+        if(if_stmt.getJmmChild(0).getKind().equals("Statement")) {
+            if(if_stmt.getJmmChild(0).hasAttribute("stmt") && if_stmt.getJmmChild(0).get("stmt").equals("if")) {
+                ifVisit(if_stmt.getJmmChild(0));
+                this.indexIf -=1;
+            }
+            else statementVisit(if_stmt.getJmmChild(0));
+        }
 
         this.code.append("\t\tendif_" + this.indexIf + ":\n");
     }
