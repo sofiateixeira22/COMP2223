@@ -143,7 +143,7 @@ public class Optimization implements JmmOptimization {
                     statementVisit(jmmNode);
             }
 
-            if(method.getJmmChild(method.getNumChildren()-1).getJmmChild(0).getJmmChild(0).getKind().equals("AdditiveOp")) {
+            if(!returnType.equals("void") && method.getJmmChild(method.getNumChildren()-1).getJmmChild(0).getJmmChild(0).getKind().equals("AdditiveOp")) {
                 this.code.append(getReturnVar(returnType));
             } else {
                 this.code.append("\n\t\tret");
@@ -257,15 +257,18 @@ public class Optimization implements JmmOptimization {
 
     public String getType(String var) {
         String type = "";
-        for(var localVar : this.localVariables) {
-            if(localVar.getName().equals(var)) type = localVar.getType().getName();
-        }
-        for(var param : this.methodParam) {
-            if(param.getName().equals(var)) type = param.getType().getName();
-        }
-        for(var field : this.fields) {
-            if(field.getName().equals(var)) type = field.getType().getName();
-        }
+        if(this.localVariables != null)
+            for(var localVar : this.localVariables)
+                if(localVar.getName().equals(var)) type = localVar.getType().getName();
+
+        if(this.methodParam != null)
+            for(var param : this.methodParam)
+                if(param.getName().equals(var)) type = param.getType().getName();
+
+        if(this.fields != null)
+            for(var field : this.fields)
+                if(field.getName().equals(var)) type = field.getType().getName();
+
         return type;
     }
 
