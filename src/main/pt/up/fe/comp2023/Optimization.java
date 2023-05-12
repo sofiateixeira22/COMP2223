@@ -141,18 +141,22 @@ public class Optimization implements JmmOptimization {
             for(JmmNode jmmNode : method.getChildren()) {
                 if(jmmNode.getKind().equals("Statement"))
                     statementVisit(jmmNode);
-
             }
 
-            this.code.append("\n\t\tret");
-            if(!returnType.equals("void")) {
-                var returnValue = getReturnVar(returnType);
-                if(returnType.equals("int[]") || returnType.equals("boolean[]")) this.code.append(".array");
-                if(returnType.equals("int") || returnType.equals("int[]")) this.code.append(".i32 " + returnValue + ";\n");
-                if(returnType.equals("boolean") || returnType.equals("boolean[]")) this.code.append(".bool " + returnValue + ";\n");
-            } else
-                this.code.append(".V;\n");
-        this.code.append("\t}\n\n");
+            if(method.getJmmChild(method.getNumChildren()-1).getJmmChild(0).getJmmChild(0).getKind().equals("AdditiveOp")) {
+                this.code.append(getReturnVar(returnType));
+            } else {
+                this.code.append("\n\t\tret");
+                if(!returnType.equals("void")) {
+                    var returnValue = getReturnVar(returnType);
+                    if(returnType.equals("int[]") || returnType.equals("boolean[]")) this.code.append(".array");
+                    if(returnType.equals("int") || returnType.equals("int[]")) this.code.append(".i32 " + returnValue + ";\n");
+                    if(returnType.equals("boolean") || returnType.equals("boolean[]")) this.code.append(".bool " + returnValue + ";\n");
+                } else
+                    this.code.append(".V;\n");
+            }
+
+            this.code.append("\t}\n\n");
         }
     }
 
@@ -360,7 +364,7 @@ public class Optimization implements JmmOptimization {
             this.operationBuilder.append(tmp + ".i32");
         }
 
-        if(type.equals("int")) this.code.append("\t\tt" + index + ".i32 :=.i32 " + this.operationBuilder.toString() + ";\n");
+        this.code.append("\t\tt" + index + ".i32 :=.i32 " + this.operationBuilder.toString() + ";\n");
 
         if(!tmp.isEmpty()) tmp.delete(0, tmp.length());
 
@@ -536,6 +540,7 @@ public class Optimization implements JmmOptimization {
     }
 
     public String getReturnVar(String returnType) {
+        //TODO: tests failing here
         var method = this.jmmSemanticsResult.getRootNode().getJmmChild(this.indexFirstLevel-1).getJmmChild(this.indexSecondLevel-1);
         StringBuilder returnVar = new StringBuilder();
         var returnValue = method.getJmmChild(method.getNumChildren()-1).getJmmChild(0).getJmmChild(0);
@@ -554,7 +559,7 @@ public class Optimization implements JmmOptimization {
         }
         if(returnValue.getKind().equals("AdditiveOp")) {
             var operation = operationVisit(returnValue, 0, returnType, new StringBuilder());
-            returnVar.append(operation + ".i32");
+            returnVar.append("\t\tret.i32 " + operation + ".i32;\n");
         }
         return returnVar.toString();
     }

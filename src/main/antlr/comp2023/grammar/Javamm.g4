@@ -30,7 +30,7 @@ varDeclaration
 
 
 methodDeclaration
-    : 'public'? type identifier '(' (type identifier ( ',' type identifier)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}'
+    : 'public'? type identifier '(' (type identifier ( ',' type identifier)* )? ')' '{' (varDeclaration)* (statement)* '}'
     | 'public'? 'static' type identifier '(' type identifier ')' '{' (varDeclaration)* (statement)* '}'
     ;
 
