@@ -63,7 +63,7 @@ condition
 
 expression
     : '(' expression ')' #Parentheses
-    | expression '[' expression ']' #BinaryOp
+    | expression '[' expression ']' #ArrayAccess
     | expression '.' 'length' #Length
     | expression '.' functionName '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | expression ('++' | '--') #UnaryPostOp
