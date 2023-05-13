@@ -193,8 +193,6 @@ public class Optimization implements JmmOptimization {
     }
 
     public void assignmentVisit(JmmNode jmmNode) {
-        //TODO: dest can be arrayAccess
-        //TODO: dest to code must be outside ifs
         var dest_node = jmmNode.getJmmChild(0);
         String dest = "";
         String array_dest = "";
@@ -215,21 +213,28 @@ public class Optimization implements JmmOptimization {
             array_og = arrayVisit(jmmNode.getJmmChild(1), null);
         }
 
+        if(jmmNode.getJmmChild(1).getKind().equals("ArrayNew")) {
+            this.indexArray+=1;
+            arrayVisit(jmmNode.getJmmChild(1), dest);
+        }
+
         if(jmmNode.getJmmChild(1).getKind().equals("AdditiveOp") || jmmNode.getJmmChild(1).getKind().equals("MultiplicativeOp")) {
             StringBuilder returnType = new StringBuilder();
             if(type.equals("int")) returnType.append("int");
             operation = operationVisit(jmmNode.getJmmChild(1), 0, returnType.toString(), new StringBuilder());
         }
 
+        if(!jmmNode.getJmmChild(1).getKind().equals("ArrayNew")) {
             this.code.append("\t\t" + dest);
 
-        if(!array_dest.equals("")) {
-            this.code.append("[" + array_dest + ".i32]");
-        }
+            if (!array_dest.equals("")) {
+                this.code.append("[" + array_dest + ".i32]");
+            }
 
-        if(type.equals("int") || type.equals("int[]")) this.code.append(".i32 :=.i32 ");
-        else if(type.equals("boolean") || type.equals("boolean[]")) this.code.append(".bool :=.bool ");
-        else this.code.append("." + type + " :=." + type + " ");
+            if (type.equals("int") || type.equals("int[]")) this.code.append(".i32 :=.i32 ");
+            else if (type.equals("boolean") || type.equals("boolean[]")) this.code.append(".bool :=.bool ");
+            else this.code.append("." + type + " :=." + type + " ");
+        }
 
         if(jmmNode.getJmmChild(1).hasAttribute("value")) {
             var value = jmmNode.getJmmChild(1).get("value");
@@ -265,11 +270,6 @@ public class Optimization implements JmmOptimization {
             if(node.getJmmChild(1).getKind().equals("Integer"))
                 this.code.append(node.getJmmChild(1).get("value") + ".i32");
             this.code.append(";\n");
-        }
-
-        if(jmmNode.getJmmChild(1).getKind().equals("ArrayNew")) {
-            this.indexArray+=1;
-            arrayVisit(jmmNode.getJmmChild(1), dest);
         }
 
         if(jmmNode.getJmmChild(1).getKind().equals("ArrayAccess")) {
