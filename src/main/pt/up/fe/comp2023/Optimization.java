@@ -193,33 +193,57 @@ public class Optimization implements JmmOptimization {
     }
 
     public void assignmentVisit(JmmNode jmmNode) {
-        var dest = jmmNode.getJmmChild(0).get("value");
+        //TODO: dest can be arrayAccess
+        //TODO: dest to code must be outside ifs
+        var dest_node = jmmNode.getJmmChild(0);
+        String dest = "";
+        String array_dest = "";
+        String array_og = "";
+        String operation = "";
 
-        if(jmmNode.getJmmChild(1).hasAttribute("value")) {
-            var value = jmmNode.getJmmChild(1).get("value");
+        if(dest_node.hasAttribute("value")) dest = dest_node.get("value");
 
-            this.code.append("\t\t" + dest);
-            var type = getType(dest);
-            if(type.equals("int")) this.code.append(".i32 :=.i32 " + value + ".i32;\n");
-            else if(type.equals("boolean")) this.code.append(".bool :=.bool " + value + ".bool;\n");
-            else this.code.append("." + type + " :=." + type + " " + value + "." + type + ";\n");
+        if(dest_node.getKind().equals("ArrayAccess")) {
+            this.indexArray += 1;
+            dest = dest_node.getJmmChild(0).get("value");
+            array_dest = arrayVisit(dest_node, null);
+        }
+        var type = getType(dest);
+
+        if(jmmNode.getJmmChild(1).getKind().equals("ArrayAccess")) {
+            this.indexArray += 1;
+            array_og = arrayVisit(jmmNode.getJmmChild(1), null);
         }
 
         if(jmmNode.getJmmChild(1).getKind().equals("AdditiveOp") || jmmNode.getJmmChild(1).getKind().equals("MultiplicativeOp")) {
             StringBuilder returnType = new StringBuilder();
-            var type = getType(dest);
             if(type.equals("int")) returnType.append("int");
-            var operation = operationVisit(jmmNode.getJmmChild(1), 0, returnType.toString(), new StringBuilder());
-            this.code.append("\t\t" + dest + ".i32 :=.i32 " + operation + ".i32;\n");
+            operation = operationVisit(jmmNode.getJmmChild(1), 0, returnType.toString(), new StringBuilder());
+        }
+
+            this.code.append("\t\t" + dest);
+
+        if(!array_dest.equals("")) {
+            this.code.append("[" + array_dest + ".i32]");
+        }
+
+        if(type.equals("int") || type.equals("int[]")) this.code.append(".i32 :=.i32 ");
+        else if(type.equals("boolean") || type.equals("boolean[]")) this.code.append(".bool :=.bool ");
+        else this.code.append("." + type + " :=." + type + " ");
+
+        if(jmmNode.getJmmChild(1).hasAttribute("value")) {
+            var value = jmmNode.getJmmChild(1).get("value");
+
+            if(type.equals("int") || type.equals("int[]")) this.code.append(value + ".i32;\n");
+            else if(type.equals("boolean") || type.equals("boolean[]")) this.code.append(value + ".bool;\n");
+            else this.code.append(value + "." + type + ";\n");
+        }
+
+        if(jmmNode.getJmmChild(1).getKind().equals("AdditiveOp") || jmmNode.getJmmChild(1).getKind().equals("MultiplicativeOp")) {
+            this.code.append(operation + ".i32;\n");
         }
 
         if(jmmNode.getJmmChild(1).getKind().equals("LogicalOp")) {
-            var type = getType(dest);
-            this.code.append("\t\t" + dest);
-            if(type.equals("int")) this.code.append(".i32 :=.i32 ");
-            else if(type.equals("boolean")) this.code.append(".bool :=.bool ");
-            else this.code.append("." + type + ":=." + type + " ");
-
             var node = jmmNode.getJmmChild(1);
             var op = node.get("op");
 
@@ -232,12 +256,6 @@ public class Optimization implements JmmOptimization {
         }
 
         if(jmmNode.getJmmChild(1).getKind().equals("RelationalOp")) {
-            var type = getType(dest);
-            this.code.append("\t\t" + dest);
-            if(type.equals("int")) this.code.append(".i32 :=.i32 ");
-            else if(type.equals("boolean")) this.code.append(".bool :=.bool ");
-            else this.code.append("." + type + ":=." + type + " ");
-
             var node = jmmNode.getJmmChild(1);
             var op = node.get("op");
 
@@ -252,6 +270,15 @@ public class Optimization implements JmmOptimization {
         if(jmmNode.getJmmChild(1).getKind().equals("ArrayNew")) {
             this.indexArray+=1;
             arrayVisit(jmmNode.getJmmChild(1), dest);
+        }
+
+        if(jmmNode.getJmmChild(1).getKind().equals("ArrayAccess")) {
+            this.code.append(jmmNode.getJmmChild(1).getJmmChild(0).get("value") + "[");
+            this.code.append(array_og + ".i32]");
+
+            var array_type = getType(jmmNode.getJmmChild(1).getJmmChild(0).get("value"));
+            if(array_type.equals("int[]")) this.code.append(".i32;\n");
+            else if(array_type.equals("boolean[]")) this.code.append(".bool;\n");
         }
     }
 
@@ -348,6 +375,13 @@ public class Optimization implements JmmOptimization {
                     if(localVar.getType().getName().equals("int")) this.operationBuilder.append(left.get("value") + ".i32");
             }
             if(left.getKind().equals("Integer")) this.operationBuilder.append(left.get("value") + ".i32");
+        } else if(left.getKind().equals("ArrayAccess")) {
+            var array_type = getType(left.getJmmChild(0).get("value"));
+            this.indexArray += 1;
+            var array = arrayVisit(left, null);
+            this.operationBuilder.append(left.getJmmChild(0).get("value") + "[" + array + ".i32]");
+            if(array_type.equals("int[]")) this.operationBuilder.append(".i32");
+            else if(array_type.equals("boolean[]")) this.operationBuilder.append(".bool");
         } else {
             operationVisit(left, index, type, tmp);
             this.operationBuilder.append(tmp + ".i32");
@@ -362,6 +396,13 @@ public class Optimization implements JmmOptimization {
                     if (localVar.getType().getName().equals("int")) this.operationBuilder.append(right.get("value") + ".i32");
             }
             if(right.getKind().equals("Integer")) this.operationBuilder.append(right.get("value") + ".i32");
+        } else if(right.getKind().equals("ArrayAccess")) {
+            var array_type = getType(right.getJmmChild(0).get("value"));
+            this.indexArray += 1;
+            var array = arrayVisit(right, null);
+            this.operationBuilder.append(right.getJmmChild(0).get("value") + "[" + array + ".i32]");
+            if(array_type.equals("int[]")) this.operationBuilder.append(".i32");
+            else if(array_type.equals("boolean[]")) this.operationBuilder.append(".bool");
         } else {
             operationVisit(right, index, type, tmp);
             this.operationBuilder.append(tmp + ".i32");
@@ -549,9 +590,23 @@ public class Optimization implements JmmOptimization {
             this.code.append(").i32.i32;\n\n");
 
             return temp;
+        }  if(jmmNode.getKind().equals("ArrayAccess")) {
+            var temp = "temp" + this.indexArray;
+
+            this.code.append("\t\ttemp" + this.indexArray);
+
+            var temp_type = getType(jmmNode.getJmmChild(1).get("value"));
+            if(jmmNode.getJmmChild(1).getKind().equals("Integer") || temp_type.equals("int"))
+                this.code.append(".i32 :=.i32 " + jmmNode.getJmmChild(1).get("value") + ".i32;\n");
+            else if(jmmNode.getJmmChild(1).getKind().equals("Boolean") || temp_type.equals("boolean"))
+                this.code.append(".bool :=.bool " + jmmNode.getJmmChild(1).get("value") + ".bool;\n");
+            else this.code.append("." + temp_type + " :=." + temp_type + " " + jmmNode.getJmmChild(1).get("value") + "." + temp_type + ";\n");
+
+            return temp;
+
         }
 
-        return null;
+        return "";
     }
 
     public String getReturnVar(String returnType) {
