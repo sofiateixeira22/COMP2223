@@ -102,8 +102,9 @@ public class Optimization implements JmmOptimization {
             var type = fieldString.getType();
             if(type.isArray()) this.code.append(".array");
             if(type.getName().equals("int[]") || type.getName().equals("int")) this.code.append(".i32");
-            if(type.getName().equals("boolean[]") || type.getName().equals("boolean")) this.code.append(".bool");
-            if(type.getName().equals(("String[]")) || type.getName().equals("String")) this.code.append(".String");
+            else if(type.getName().equals("boolean[]") || type.getName().equals("boolean")) this.code.append(".bool");
+            else if(type.getName().equals(("String[]")) || type.getName().equals("String")) this.code.append(".String");
+            else this.code.append(".").append(type.getName());
 
             this.code.append(";\n");
         }
