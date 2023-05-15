@@ -67,7 +67,7 @@ expression
     | expression '.' 'length' #Length
     | expression '.' functionName '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | expression ('++' | '--') #UnaryPostOp
-    | ('!' | '++' | '--') expression #UnaryPreOp
+    | op=('!' | '++' | '--') expression #UnaryPreOp
     | 'new' type '[' expression ']' #ArrayNew
     | 'new' value=ID '('')' #ClassNew
     | expression op=('*' | '/' | '%') expression #MultiplicativeOp
