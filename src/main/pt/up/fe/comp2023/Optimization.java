@@ -152,7 +152,8 @@ public class Optimization implements JmmOptimization {
                     var returnValue = getReturnVar(returnType);
                     if(returnType.equals("int[]") || returnType.equals("boolean[]")) this.code.append(".array");
                     if(returnType.equals("int") || returnType.equals("int[]")) this.code.append(".i32 ").append(returnValue).append(";\n");
-                    if(returnType.equals("boolean") || returnType.equals("boolean[]")) this.code.append(".bool ").append(returnValue).append(";\n");
+                    else if(returnType.equals("boolean") || returnType.equals("boolean[]")) this.code.append(".bool ").append(returnValue).append(";\n");
+                    else this.code.append(".").append(returnType).append(";\n");
                 } else
                     this.code.append(".V;\n");
             }
@@ -767,10 +768,9 @@ public class Optimization implements JmmOptimization {
             if(type.equals("int[]") || type.equals("boolean[]")) returnVar.append(".array");
             if(returnType.equals("int") || returnType.equals("int[]")) {
                 returnVar.append(".i32");
-            }
-            if(returnType.equals("boolean") || returnType.equals("boolean[]")) {
+            } else if(returnType.equals("boolean") || returnType.equals("boolean[]")) {
                 returnVar.append(".bool");
-            }
+            } else returnVar.append(".").append(returnType);
         }
         if(returnValue.getKind().equals("AdditiveOp")) {
             var operation = operationVisit(returnValue, returnType, new StringBuilder());
