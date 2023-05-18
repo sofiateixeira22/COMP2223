@@ -506,9 +506,14 @@ public class Optimization implements JmmOptimization {
             this.operationBuilder.append(tmp).append(".i32");
         }
 
+        if(!tmp.isEmpty()) tmp.delete(0, tmp.length());
+
+        if(!left.hasAttribute("value") || !right.hasAttribute("value")) {
+            this.indexTemp += 1;
+
+        }
         this.code.append("\t\ttemp").append(this.indexTemp).append(".i32 :=.i32 ").append(this.operationBuilder.toString()).append(";\n");
 
-        if(!tmp.isEmpty()) tmp.delete(0, tmp.length());
 
         tmp.append("temp").append(this.indexTemp);
 
