@@ -285,7 +285,14 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         Pair<Boolean, Type> checkCondition = traverseTree(jmmNode.getJmmChild(0));
 
-        System.out.println(checkCondition);
+        System.out.println(checkCondition.b);
+
+        if (checkCondition == null){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
+                    "Invalid Condition"));
+            this.counter += 1;
+            return new Pair<>(false, null);
+        }
 
         if (!checkCondition.b.equals(new Type("boolean", false))){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
@@ -309,7 +316,7 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (jmmNode.toString().contains("AdditiveOp")){
             return checkOperation(jmmNode, "additive");
         }
-        if (jmmNode.toString().contains("LogicalOp")){
+        if (jmmNode.toString().contains("LogicalOp") || jmmNode.toString().contains("RelationalOp")){
             return checkOperation(jmmNode, "logical");
         }
         if (jmmNode.toString().equals("AssignmentOp")){
@@ -324,7 +331,7 @@ public class SemanticAnalysis implements JmmAnalysis {
         if (jmmNode.toString().contains("IdentifierExpr")){
             return checkVariableExists(jmmNode.get("value"));
         }
-        if (jmmNode.toString().equals("BinaryOp")){
+        if (jmmNode.toString().equals("BinaryOp") || jmmNode.toString().equals("ArrayAccess")){
             return checkArrayAccess(jmmNode);
         }
         if (jmmNode.toString().equals("MethodCall")){
