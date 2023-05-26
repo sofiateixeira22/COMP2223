@@ -259,7 +259,7 @@ public class SemanticAnalysis implements JmmAnalysis {
                     "Method called does not exist."));
             return new Pair<>(false, null);
         }
-        if (!isInImports(checkMethodCaller.b.getName()) || checkMethodCaller.b.getName().equals(this.table.getClassName())){
+        if (!isInImports(checkMethodCaller.b.getName()) && !checkMethodCaller.b.getName().equals(this.table.getClassName())){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                     "Class not imported." + checkMethodCaller.b.getName()));
             return new Pair<>(false, null);
