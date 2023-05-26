@@ -15,6 +15,7 @@ import java.util.*;
 
 public class SemanticAnalysis implements JmmAnalysis {
 
+    String currentMethod;
     List<Symbol> currentMethodVariables = new ArrayList<>();
     List<Symbol> currentMethodParameters = new ArrayList<>();
 
@@ -31,6 +32,14 @@ public class SemanticAnalysis implements JmmAnalysis {
         return false;
     }
 
+    public Pair<Boolean, Type> checkThisExpr(JmmNode jmmNode){
+        if (this.currentMethod != "main"){
+            return new Pair<>(true, new Type(this.table.className, false));
+        }
+
+        return new Pair<>(false, null);
+    }
+
     public Pair<Boolean, Type> checkVariableExists(String varName){
 
         if (this.currentMethodVariables != null){
@@ -41,6 +50,8 @@ public class SemanticAnalysis implements JmmAnalysis {
                 }
             }
         }
+
+        System.out.println(this.currentMethodVariables);
 
         if (this.currentMethodParameters != null) {
 
@@ -307,6 +318,7 @@ public class SemanticAnalysis implements JmmAnalysis {
     public Pair<Boolean, Type> traverseTree(JmmNode jmmNode){
 
         if (jmmNode.toString().equals("MethodDeclaration")){
+            this.currentMethod = jmmNode.getJmmChild(1).get("value");
             this.currentMethodVariables = this.table.getLocalVariables(jmmNode.getChildren().get(1).get("value"));
             this.currentMethodParameters = this.table.getParameters(jmmNode.getChildren().get(1).get("value"));
         }
@@ -330,6 +342,9 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
         if (jmmNode.toString().contains("IdentifierExpr")){
             return checkVariableExists(jmmNode.get("value"));
+        }
+        if (jmmNode.toString().equals("ThisExpr")){
+            return checkThisExpr(jmmNode);
         }
         if (jmmNode.toString().equals("BinaryOp") || jmmNode.toString().equals("ArrayAccess")){
             return checkArrayAccess(jmmNode);
