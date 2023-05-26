@@ -61,9 +61,11 @@ public class SemanticAnalysis implements JmmAnalysis {
         }
 
         if (this.table.getFields() != null) {
-            for (Symbol variable : this.table.getFields()) {
-                if (variable.getName().equals(varName)) {
-                    return new Pair<>(true, variable.getType());
+            if (!this.currentMethod.equals("main")) {
+                for (Symbol variable : this.table.getFields()) {
+                    if (variable.getName().equals(varName)) {
+                        return new Pair<>(true, variable.getType());
+                    }
                 }
             }
         }
@@ -176,6 +178,9 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         if (checkedVar2.a && checkedVar.a) {
 
+            System.out.println("CHECKED VAR 1 : " + checkedVar);
+            System.out.println("CHECKED VAR 2 : " + checkedVar2);
+
             if (checkedVar.b.getName().equals("-FROMIMPORTS-")|| checkedVar2.b.getName().equals("-FROMIMPORTS-")){
                 validAssignment = true;
             }
@@ -254,9 +259,9 @@ public class SemanticAnalysis implements JmmAnalysis {
                     "Method called does not exist."));
             return new Pair<>(false, null);
         }
-        if (!isInImports(checkMethodCaller.b.getName())){
+        if (!isInImports(checkMethodCaller.b.getName()) || checkMethodCaller.b.getName().equals(this.table.getClassName())){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
-                    "Class not imported."));
+                    "Class not imported." + checkMethodCaller.b.getName()));
             return new Pair<>(false, null);
         }
 

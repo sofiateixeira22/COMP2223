@@ -192,12 +192,16 @@ public class AstVisitor extends AJmmVisitor {
 
         boolean isArray = false;
         String substring = typeName.substring(Math.max(typeName.length() - 2, 0));
+        String returnType = typeName;
 
         if (substring.equals("[]")){
             isArray = true;
+            returnType = typeName.substring(0,typeName.length() - 2);
         }
 
-        Type type = new Type(typeName, isArray);
+
+
+        Type type = new Type(returnType, isArray);
 
         Symbol newSymbol = new Symbol(type, symbolName);
 
