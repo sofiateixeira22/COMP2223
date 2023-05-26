@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 
 public class AstVisitor extends AJmmVisitor {
 
+    String methodName;
     List<String> imports = new ArrayList<>();
     String className;
     String superString;
@@ -94,7 +95,8 @@ public class AstVisitor extends AJmmVisitor {
 
         List<Symbol> parameters = new ArrayList<>();
 
-        auxLocalVariables.clear();
+        this.auxLocalVariables = new ArrayList<>();
+        this.methodName = jmmNode.getJmmChild(1).get("value");
 
         String currentMethod = "";
 
@@ -193,9 +195,8 @@ public class AstVisitor extends AJmmVisitor {
         Symbol newSymbol = new Symbol(type, symbolName);
 
         if (methodCaller.equals("MethodDeclaration")){
-            String methodName = jmmNode.getJmmParent().getChildren().get(1).get("value");
-            auxLocalVariables.add(newSymbol);
-            this.localVariables.put(methodName, auxLocalVariables);
+            this.auxLocalVariables.add(newSymbol);
+            this.localVariables.put(this.methodName, this.auxLocalVariables);
         }
         else {
             this.fields.add(newSymbol);
@@ -215,7 +216,7 @@ public class AstVisitor extends AJmmVisitor {
         ret += s2+" public static void main ( String [] args ) {\n";
 
         for ( JmmNode child : jmmNode . getChildren ()){
-            ret += visit (child ,s2 + "\t");
+            visit (child ,s2 + "\t");
             ret += "\n";
         }
         ret += s2 + "}\n";
