@@ -16,9 +16,9 @@ repositories {
 }
 
 dependencies {
-	implementation "junit:junit:4.11"     
-    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10'
-    antlr "org.antlr:antlr4:4.5.3"    
+	implementation 'junit:junit:4.13.2'
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    antlr 'org.antlr:antlr4:4.12.0'
 }
 
 
