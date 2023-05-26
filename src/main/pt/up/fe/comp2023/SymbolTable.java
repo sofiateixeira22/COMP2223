@@ -78,7 +78,5 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     }
 
     @Override
-    public List<Symbol> getLocalVariables(String s) {
-        return this.localVariables.get(s);
-    }
+    public List<Symbol> getLocalVariables(String s) { return this.localVariables.get(s); }
 }

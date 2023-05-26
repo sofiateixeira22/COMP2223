@@ -98,6 +98,8 @@ public class AstVisitor extends AJmmVisitor {
         this.auxLocalVariables = new ArrayList<>();
         this.methodName = jmmNode.getJmmChild(1).get("value");
 
+        boolean hasVars = false;
+
         String currentMethod = "";
 
         String type = "Type";
@@ -145,11 +147,16 @@ public class AstVisitor extends AJmmVisitor {
                 parameters.add(symbol);
             }
             else if (childKind.equals(varDeclaration)){
+                hasVars = true;
                 visit(child);
             }
         }
 
         this.methodParameters.put(currentMethod, parameters);
+
+        if (!hasVars){
+            this.localVariables.put(this.methodName, new ArrayList<>());
+        }
 
         return "";
     }
