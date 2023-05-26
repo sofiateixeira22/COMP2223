@@ -278,9 +278,14 @@ public class SemanticAnalysis implements JmmAnalysis {
         return new Pair<>(false, null);
     }
 
+    // Cannot evoke equals, b is null
     public Pair<Boolean, Type> checkCondition(JmmNode jmmNode){
 
+        System.out.println("---------------------------");
+
         Pair<Boolean, Type> checkCondition = traverseTree(jmmNode.getJmmChild(0));
+
+        System.out.println(checkCondition);
 
         if (!checkCondition.b.equals(new Type("boolean", false))){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
@@ -354,7 +359,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         //System.out.println(jmmParserResult.getRootNode().toTree());
 
-        //traverseTree(jmmParserResult.getRootNode());
+        traverseTree(jmmParserResult.getRootNode());
 
         return new JmmSemanticsResult(jmmParserResult, table, this.reports);
     }
