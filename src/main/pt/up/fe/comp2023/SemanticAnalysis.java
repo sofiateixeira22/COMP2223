@@ -292,7 +292,7 @@ public class SemanticAnalysis implements JmmAnalysis {
 
         Pair<Boolean, Type> checkCondition = traverseTree(jmmNode.getJmmChild(0));
 
-        if (checkCondition == null){
+        if (checkCondition.b == null || checkCondition.a == null){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, this.counter,
                     "Invalid Condition"));
             this.counter += 1;
